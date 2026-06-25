@@ -6,9 +6,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const path = decodeURIComponent(req.query.path || '');
+    const fullPath = decodeURIComponent(req.query.path || '');
     const token = req.headers.authorization || '';
-    const url = 'https://www.bling.com.br/Api/v3/' + path;
+    const url = 'https://www.bling.com.br/Api/v3/' + fullPath;
 
     const headers = {
       'Authorization': token,
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     const resp = await fetch(url, { method: req.method, headers, body });
     const text = await resp.text();
-    
+
     try {
       const json = JSON.parse(text);
       return res.status(resp.status).json(json);
@@ -33,6 +33,6 @@ export default async function handler(req, res) {
       return res.status(resp.status).send(text);
     }
   } catch (err) {
-    return res.status(500).json({ error: err.message, stack: err.stack });
+    return res.status(500).json({ error: err.message });
   }
 }
