@@ -250,8 +250,7 @@ async function refreshTokenFn(){
 
 async function blingGet(path){
   const cleanPath=path.startsWith('/')?path.slice(1):path;
-  const [basePath,queryStr]=cleanPath.split('?');
-  const proxyUrl='/api/bling?path='+encodeURIComponent(basePath)+(queryStr?'&'+queryStr:'');
+  const proxyUrl='/api/bling?path='+encodeURIComponent(cleanPath);
   let r=await fetch(proxyUrl,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
   if(r.status===401){
     const ok=await refreshTokenFn();
