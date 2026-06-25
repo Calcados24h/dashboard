@@ -183,8 +183,8 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────
-let ACCESS_TOKEN    = '6a0257b3c048930b8fa32749e7e3a4f95bfa6805';
-let REFRESH_TOKEN   = '1818c8158a308926298b15ec7119543f8ccee6c5';
+let ACCESS_TOKEN    = 'eb37580c6a99c5191a9953ad82aa534f29a6c114';
+let REFRESH_TOKEN   = '7ba53e5d2f0856280e6c0534f3e3d8da7ae334e7';
 const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
 
@@ -231,10 +231,10 @@ async function refreshTokenFn(){
   try{
     setStatus('Renovando token...');
     const creds=btoa(CLIENT_ID+':'+CLIENT_SECRET);
-    const r=await fetch('/api/bling?path=/oauth/token',{
+    const r=await fetch('/api/bling?path=oauth%2Ftoken',{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded','Authorization':'Basic '+creds},
-      body:new URLSearchParams({grant_type:'refresh_token',refresh_token:REFRESH_TOKEN})
+      body:new URLSearchParams({grant_type:'refresh_token',refresh_token:REFRESH_TOKEN}).toString()
     });
     const d=await r.json();
     if(d.access_token){
@@ -249,10 +249,12 @@ async function refreshTokenFn(){
 }
 
 async function blingGet(path){
-  let r=await fetch('/api/bling?path='+path,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
+  const cleanPath=path.startsWith('/')?path.slice(1):path;
+  const proxyUrl='/api/bling?path='+encodeURIComponent(cleanPath);
+  let r=await fetch(proxyUrl,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
   if(r.status===401){
     const ok=await refreshTokenFn();
-    if(ok) r=await fetch('/api/bling?path='+path,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
+    if(ok) r=await fetch(proxyUrl,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
   }
   if(!r.ok)throw new Error('HTTP '+r.status);
   return r.json();
