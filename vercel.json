@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/bling", "destination": "/api/bling.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
