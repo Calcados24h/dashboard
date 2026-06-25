@@ -6,14 +6,19 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // Pega o path completo incluindo query string
-    const rawPath = decodeURIComponent(req.query.path || '');
     const token = req.headers.authorization || '';
     
-    // Monta a URL completa do Bling
-    const url = 'https://www.bling.com.br/Api/v3/' + rawPath;
-
-    console.log('Calling Bling URL:', url);
+    // Reconstrói a URL do Bling a partir de TODOS os query params
+    // req.query contém: { path: 'pedidos/vendas', pagina: '1', limite: '100', ... }
+    const { path, ...rest } = req.query;
+    const decodedPath = decodeURIComponent(path || '');
+    
+    // Monta query string com os parâmetros restantes
+    const queryString = Object.entries(rest)
+      .map(([k, v]) => ${k}=${encodeURIComponent(v)})
+      .join('&');
+    
+    const url = 'https://www.bling.com.br/Api/v3/' + decodedPath + (queryString ? '?' + queryString : '');
 
     const headers = {
       'Authorization': token,
@@ -32,12 +37,11 @@ export default async function handler(req, res) {
     const text = await resp.text();
 
     try {
-      const json = JSON.parse(text);
-      return res.status(resp.status).json(json);
+      return res.status(resp.status).json(JSON.parse(text));
     } catch {
       return res.status(resp.status).send(text);
     }
   } catch (err) {
-    return res.status(500).json({ error: err.message, stack: err.stack });
+    return res.status(500).json({ error: err.message });
   }
 }
