@@ -2,45 +2,28 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     const token = req.headers.authorization || '';
+    const { path, ...params } = req.query;
+    const endpoint = decodeURIComponent(path || '');
     
-    // Reconstrói a URL do Bling a partir de TODOS os query params
-    // req.query contém: { path: 'pedidos/vendas', pagina: '1', limite: '100', ... }
-    const { path, ...rest } = req.query;
-    const decodedPath = decodeURIComponent(path || '');
-    
-    // Monta query string com os parâmetros restantes
-    const queryString = Object.entries(rest)
-      .map(([k, v]) => ${k}=${encodeURIComponent(v)})
-      .join('&');
-    
-    const url = 'https://www.bling.com.br/Api/v3/' + decodedPath + (queryString ? '?' + queryString : '');
+    // Reconstrói query string com params adicionais
+    const qs = new URLSearchParams(params).toString();
+    const url = 'https://www.bling.com.br/Api/v3/' + endpoint + (qs ? '?' + qs : '');
 
-    const headers = {
-      'Authorization': token,
-      'Accept': 'application/json',
-    };
-
-    let body = undefined;
+    const headers = { 'Authorization': token, 'Accept': 'application/json' };
+    
+    let body;
     if (req.method === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      const raw = req.body;
-      if (typeof raw === 'string') body = raw;
-      else if (typeof raw === 'object') body = new URLSearchParams(raw).toString();
+      body = typeof req.body === 'string' ? req.body : new URLSearchParams(req.body||{}).toString();
     }
 
     const resp = await fetch(url, { method: req.method, headers, body });
-    const text = await resp.text();
-
-    try {
-      return res.status(resp.status).json(JSON.parse(text));
-    } catch {
-      return res.status(resp.status).send(text);
-    }
+    const data = await resp.json().catch(() => ({}));
+    return res.status(resp.status).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
