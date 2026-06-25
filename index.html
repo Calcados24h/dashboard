@@ -231,7 +231,7 @@ async function refreshTokenFn(){
   try{
     setStatus('Renovando token...');
     const creds=btoa(CLIENT_ID+':'+CLIENT_SECRET);
-    const r=await fetch('https://www.bling.com.br/Api/v3/oauth/token',{
+    const r=await fetch('/api/bling?path=/oauth/token',{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded','Authorization':'Basic '+creds},
       body:new URLSearchParams({grant_type:'refresh_token',refresh_token:REFRESH_TOKEN})
@@ -249,10 +249,10 @@ async function refreshTokenFn(){
 }
 
 async function blingGet(path){
-  let r=await fetch('https://www.bling.com.br/Api/v3'+path,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
+  let r=await fetch('/api/bling?path='+path,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
   if(r.status===401){
     const ok=await refreshTokenFn();
-    if(ok) r=await fetch('https://www.bling.com.br/Api/v3'+path,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
+    if(ok) r=await fetch('/api/bling?path='+path,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
   }
   if(!r.ok)throw new Error('HTTP '+r.status);
   return r.json();
