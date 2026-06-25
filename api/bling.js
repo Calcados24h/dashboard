@@ -7,21 +7,27 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const { path } = req.query;
-  const token = req.headers.authorization;
-
   try {
-    const url = https://www.bling.com.br/Api/v3/${path};
-    const response = await fetch(url, {
+    const path = req.query.path || '';
+    const token = req.headers.authorization || '';
+    const baseUrl = 'https://www.bling.com.br/Api/v3/';
+    const url = baseUrl + decodeURIComponent(path);
+    
+    const fetchOptions = {
       method: req.method,
       headers: {
         'Authorization': token,
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
-    });
+      }
+    };
 
+    if (req.method === 'POST') {
+      fetchOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      const body = Object.entries(req.body||{}).map(([k,v])=>${k}=${encodeURIComponent(v)}).join('&');
+      fetchOptions.body = body;
+    }
+
+    const response = await fetch(url, fetchOptions);
     const data = await response.json();
     return res.status(response.status).json(data);
   } catch (error) {
