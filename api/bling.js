@@ -6,9 +6,14 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const fullPath = decodeURIComponent(req.query.path || '');
+    // Pega o path completo incluindo query string
+    const rawPath = decodeURIComponent(req.query.path || '');
     const token = req.headers.authorization || '';
-    const url = 'https://www.bling.com.br/Api/v3/' + fullPath;
+    
+    // Monta a URL completa do Bling
+    const url = 'https://www.bling.com.br/Api/v3/' + rawPath;
+
+    console.log('Calling Bling URL:', url);
 
     const headers = {
       'Authorization': token,
@@ -33,6 +38,6 @@ export default async function handler(req, res) {
       return res.status(resp.status).send(text);
     }
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message, stack: err.stack });
   }
 }
