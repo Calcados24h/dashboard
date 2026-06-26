@@ -184,6 +184,7 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────
 let ACCESS_TOKEN    = 'd6988daec9123178ec54d2aaef4c9198aaef4b4d';
+let REFRESH_TOKEN   = '0fae5448c5610606627fe1633db4e3f0f8e813e7';
 const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
 
@@ -229,10 +230,16 @@ function toggleValores(){
 async function refreshTokenFn(){
   try{
     setStatus('Renovando token...');
-    const r=await fetch('/api/token');
+    const creds=btoa(CLIENT_ID+':'+CLIENT_SECRET);
+    const r=await fetch('/api/bling?path=oauth%2Ftoken',{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded','Authorization':'Basic '+creds},
+      body:'grant_type=refresh_token&refresh_token='+REFRESH_TOKEN
+    });
     const d=await r.json();
     if(d.access_token){
       ACCESS_TOKEN=d.access_token;
+      if(d.refresh_token) REFRESH_TOKEN=d.refresh_token;
       setStatus('✅ Token renovado!');
       setTimeout(()=>setStatus(''),2000);
       return true;
