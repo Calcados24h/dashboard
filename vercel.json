@@ -1,18 +1,12 @@
 {
   "functions": {
-    "api/bling.js": {
-      "memory": 128,
-      "maxDuration": 30
+    "api/*.js": {
+      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [
-    {
-      "source": "/api/bling",
-      "destination": "/api/bling.js"
-    },
-    {
-      "source": "/((?!api).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/bling", "destination": "/api/bling.js" },
+    { "source": "/api/token", "destination": "/api/token.js" },
+    { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
 }
