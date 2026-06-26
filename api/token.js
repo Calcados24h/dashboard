@@ -1,33 +1,47 @@
-const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
+const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
 const INITIAL_REFRESH = '427783690a188b31ce5efe98ebdf09a6ceec2124';
+
+async function kvRequest(path) {
+  const base = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  const r = await fetch(new URL(path, base).href, {
+    headers: { Authorization: Bearer ${token} }
+  });
+  return r.json();
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const kvUrl   = (process.env.KV_REST_API_URL || '').replace(/\/$/, '');
-    const kvToken = process.env.KV_REST_API_TOKEN || '';
+    // Testa se variáveis existem
+    const kvUrl = process.env.KV_REST_API_URL;
+    const kvToken = process.env.KV_REST_API_TOKEN;
+    
+    if (!kvUrl || !kvToken) {
+      return res.status(500).json({ error: 'KV não configurado', kvUrl: !!kvUrl, kvToken: !!kvToken });
+    }
 
-    // Busca access token salvo
-    const getResp = await fetch(${kvUrl}/get/bling_access_token, {
+    // Busca access token
+    const r1 = await fetch(${kvUrl}/get/bling_access_token, {
       headers: { Authorization: Bearer ${kvToken} }
     });
-    const getData = await getResp.json();
-    let accessToken = getData.result || null;
+    const d1 = await r1.json();
+    let accessToken = d1.result;
 
     if (!accessToken) {
-      // Busca refresh token salvo ou usa o inicial
-      const getRefResp = await fetch(${kvUrl}/get/bling_refresh_token, {
+      // Busca refresh token
+      const r2 = await fetch(${kvUrl}/get/bling_refresh_token, {
         headers: { Authorization: Bearer ${kvToken} }
       });
-      const getRefData = await getRefResp.json();
-      const refreshToken = getRefData.result || INITIAL_REFRESH;
+      const d2 = await r2.json();
+      const refreshToken = d2.result || INITIAL_REFRESH;
 
-      // Renova o token
+      // Renova
       const creds = Buffer.from(${CLIENT_ID}:${CLIENT_SECRET}).toString('base64');
-      const tokenResp = await fetch('https://www.bling.com.br/Api/v3/oauth/token', {
+      const r3 = await fetch('https://www.bling.com.br/Api/v3/oauth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -35,25 +49,27 @@ export default async function handler(req, res) {
         },
         body: grant_type=refresh_token&refresh_token=${refreshToken}
       });
+      const d3 = await r3.json();
 
-      const tokenData = await tokenResp.json();
+      if (!d3.access_token) {
+        return res.status(401).json({ error: 'Falha ao renovar', bling: d3 });
+      }
 
-      if (tokenData.access_token) {
-        accessToken = tokenData.access_token;
+      accessToken = d3.access_token;
 
-        // Salva access token por 5.5h
-        await fetch(${kvUrl}/set/bling_access_token/${accessToken}/ex/19800, {
-          headers: { Authorization: Bearer ${kvToken} }
+      // Salva tokens
+      await fetch(${kvUrl}/set/bling_access_token, {
+        method: 'POST',
+        headers: { Authorization: Bearer ${kvToken}, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: accessToken, ex: 19800 })
+      });
+
+      if (d3.refresh_token) {
+        await fetch(${kvUrl}/set/bling_refresh_token, {
+          method: 'POST',
+          headers: { Authorization: Bearer ${kvToken}, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: d3.refresh_token })
         });
-
-        // Salva novo refresh token
-        if (tokenData.refresh_token) {
-          await fetch(${kvUrl}/set/bling_refresh_token/${tokenData.refresh_token}, {
-            headers: { Authorization: Bearer ${kvToken} }
-          });
-        }
-      } else {
-        return res.status(401).json({ error: 'Falha ao renovar', details: tokenData });
       }
     }
 
