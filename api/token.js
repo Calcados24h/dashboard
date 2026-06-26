@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
@@ -11,11 +11,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // Tenta pegar token salvo no KV
-    let accessToken = await kv.get('bling_access_token');
-    let refreshToken = await kv.get('bling_refresh_token') || INITIAL_REFRESH;
+    const redis = Redis.fromEnv();
 
-    // Se não tem token ou está vencendo, renova
+    // Tenta pegar token salvo
+    let accessToken = await redis.get('bling_access_token');
+    let refreshToken = await redis.get('bling_refresh_token') || INITIAL_REFRESH;
+
+    // Se não tem token válido, renova
     if (!accessToken) {
       const creds = Buffer.from(${CLIENT_ID}:${CLIENT_SECRET}).toString('base64');
       const resp = await fetch('https://www.bling.com.br/Api/v3/oauth/token', {
@@ -31,15 +33,16 @@ export default async function handler(req, res) {
       });
 
       const data = await resp.json();
+      
       if (data.access_token) {
         accessToken = data.access_token;
-        // Salva no KV com expiração de 5.5 horas
-        await kv.set('bling_access_token', accessToken, { ex: 19800 });
+        // Salva por 5.5 horas
+        await redis.set('bling_access_token', accessToken, { ex: 19800 });
         if (data.refresh_token) {
-          await kv.set('bling_refresh_token', data.refresh_token);
+          await redis.set('bling_refresh_token', data.refresh_token);
         }
       } else {
-        return res.status(401).json({ error: 'Falha ao renovar token' });
+        return res.status(401).json({ error: 'Falha ao renovar token', details: data });
       }
     }
 
