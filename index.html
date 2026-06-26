@@ -440,11 +440,14 @@ async function loadAll(){
 
 // Busca token automaticamente ao iniciar
 async function init(){
-  setStatus('Iniciando...');
-  await refreshTokenFn();
+  // Tenta carregar direto com o token atual
+  setStatus('Carregando...');
   await loadAll();
   setInterval(loadAll,300000);
-  setInterval(refreshTokenFn,5*60*60*1000);
+  // Renova token a cada 5h
+  setInterval(async()=>{
+    await refreshTokenFn();
+  },5*60*60*1000);
 }
 init();
 </script>
