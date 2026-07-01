@@ -8,11 +8,13 @@ module.exports = async function handler(req, res) {
     const token = req.headers.authorization || '';
     const { path, ...params } = req.query;
     const endpoint = decodeURIComponent(path || '');
+    
+    // Reconstrói query string com params adicionais
     const qs = new URLSearchParams(params).toString();
     const url = 'https://www.bling.com.br/Api/v3/' + endpoint + (qs ? '?' + qs : '');
 
     const headers = { 'Authorization': token, 'Accept': 'application/json' };
-
+    
     let body;
     if (req.method === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
