@@ -269,7 +269,7 @@ const isEntrega  = p => getSitId(p)===415750||getSitId(p)===12;
 const isAtendido = p => getSitId(p)===9;
 const isReserva  = p => getSitId(p)===15;
 const isCancelado= p => getSitId(p)===11;
-const isCaixa    = p => p?.loja?.id===203331656||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('24');
+const isCaixa    = p => p?.loja?.id===203331656||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('24')||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('caixa');
 
 // ── RENDER RANKING VENDAS ─────────────────────────────────────────
 function renderRanking(elId, dados, tipo){
@@ -360,21 +360,15 @@ async function loadAll(){
     document.getElementById('k-hoje').textContent=listaAtiva.length;
     document.getElementById('k-ticket').textContent=fmt(listaAtiva.length?soma(listaAtiva)/listaAtiva.length:0);
 
-    // 1ª Venda — cliente cadastrado hoje (data de cadastro = hoje)
-    setStatus('Buscando 1ª vendas...');
-    // Busca contatos cadastrados hoje
-    let contatosHoje=new Set(),ctPage=1,ctDone=false;
-    while(!ctDone){
-      const ctd=await blingGet('/contatos?pagina='+ctPage+'&limite=100&dataInicial='+hoje+'&dataFinal='+hoje);
-      const ctItems=ctd?.data||[];
-      ctItems.forEach(c=>contatosHoje.add(c.id));
-      ctDone=ctItems.length<100||ctPage>=5;
-      ctPage++;
-    }
-    // Filtra pedidos de hoje onde o contato foi cadastrado hoje
-    const pvLista=listaAtiva.filter(p=>{
-      const id=p?.contato?.id;
-      return id && contatosHoje.has(id);
+    // 1ª Venda — usa campo numeroCompras ou primeiraCompra dos detalhados
+    setStatus('Identificando 1ª vendas...');
+    const pvLista=detalhados.filter(p=>{
+      const c=p?.contato;
+      if(!c) return false;
+      // Verifica campos possíveis de primeira compra
+      if(c.primeiraCompra===true) return true;
+      if(Number(c.numeroCompras||c.quantidadeCompras||0)===1) return true;
+      return false;
     });
     setBar(30);
     setRC('primeira',pvLista,soma(pvLista));
