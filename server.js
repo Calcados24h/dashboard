@@ -3,7 +3,7 @@ const http = require('http');
 
 const CLIENT_ID = process.env.BLING_CLIENT_ID || '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = process.env.BLING_CLIENT_SECRET || '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-let refreshToken = process.env.BLING_REFRESH_TOKEN || '719bdef242e32a3519a044f2250fffe1c3dfeba6';
+let refreshToken = process.env.BLING_REFRESH_TOKEN || '3c77859df68c5a5b8f1e8bed507c30b1e6362f48';
 let accessToken = '';
 let tokenExpiry = 0;
 
