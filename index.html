@@ -230,16 +230,10 @@ function toggleValores(){
 async function refreshTokenFn(){
   try{
     setStatus('Renovando token...');
-    const creds=btoa(CLIENT_ID+':'+CLIENT_SECRET);
-    const r=await fetch('/api/bling?path=oauth%2Ftoken',{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded','Authorization':'Basic '+creds},
-      body:'grant_type=refresh_token&refresh_token='+REFRESH_TOKEN
-    });
+    const r=await fetch('https://dashboard-wr1x.onrender.com/token');
     const d=await r.json();
     if(d.access_token){
       ACCESS_TOKEN=d.access_token;
-      if(d.refresh_token) REFRESH_TOKEN=d.refresh_token;
       setStatus('✅ Token renovado!');
       setTimeout(()=>setStatus(''),2000);
       return true;
@@ -440,14 +434,11 @@ async function loadAll(){
 
 // Busca token automaticamente ao iniciar
 async function init(){
-  // Tenta carregar direto com o token atual
-  setStatus('Carregando...');
+  setStatus('Conectando ao servidor...');
+  await refreshTokenFn();
   await loadAll();
   setInterval(loadAll,300000);
-  // Renova token a cada 5h
-  setInterval(async()=>{
-    await refreshTokenFn();
-  },5*60*60*1000);
+  setInterval(refreshTokenFn,5*60*60*1000);
 }
 init();
 </script>
