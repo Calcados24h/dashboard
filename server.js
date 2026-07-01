@@ -1,11 +1,11 @@
 const https = require('https');
 const http = require('http');
 
-const CLIENT_ID = process.env.BLING_CLIENT_ID || '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
-const CLIENT_SECRET = process.env.BLING_CLIENT_SECRET || '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-let refreshToken = process.env.BLING_REFRESH_TOKEN || '3c77859df68c5a5b8f1e8bed507c30b1e6362f48';
-let accessToken = '';
-let tokenExpiry = 0;
+const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
+const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
+let refreshToken = 'f5967736b424f2fc6035409377821748813e59e2';
+let accessToken = '26bc5aeacf575e7f6c3d81d85cfbfecf63b50daf';
+let tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
 
 function renewToken() {
   return new Promise((resolve, reject) => {
@@ -34,12 +34,10 @@ function renewToken() {
             console.log('Token renovado com sucesso!');
             resolve(accessToken);
           } else {
-            console.error('Erro ao renovar:', json);
+            console.error('Erro ao renovar:', JSON.stringify(json));
             reject(json);
           }
-        } catch(e) {
-          reject(e);
-        }
+        } catch(e) { reject(e); }
       });
     });
     req.on('error', reject);
@@ -55,22 +53,14 @@ async function getToken() {
   return accessToken;
 }
 
-// Renova a cada 5 horas
 setInterval(() => renewToken().catch(console.error), 5 * 60 * 60 * 1000);
-
-// Renova ao iniciar
-renewToken().catch(console.error);
 
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
+  if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
 
   if (req.url === '/token') {
     try {
