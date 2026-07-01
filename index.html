@@ -360,18 +360,8 @@ async function loadAll(){
     document.getElementById('k-hoje').textContent=listaAtiva.length;
     document.getElementById('k-ticket').textContent=fmt(listaAtiva.length?soma(listaAtiva)/listaAtiva.length:0);
 
-    // 1ª Venda — usa campo numeroCompras ou primeiraCompra dos detalhados
-    setStatus('Identificando 1ª vendas...');
-    const pvLista=detalhados.filter(p=>{
-      const c=p?.contato;
-      if(!c) return false;
-      // Verifica campos possíveis de primeira compra
-      if(c.primeiraCompra===true) return true;
-      if(Number(c.numeroCompras||c.quantidadeCompras||0)===1) return true;
-      return false;
-    });
+    // 1ª Venda — será calculada depois dos detalhados
     setBar(30);
-    setRC('primeira',pvLista,soma(pvLista));
 
     // Detalhes para vendedor e loja
     setStatus('Buscando detalhes...');
@@ -392,6 +382,16 @@ async function loadAll(){
     // Frente de caixa com detalhes
     const grpCaixa=detalhados.filter(isCaixa);
     setRC('caixa',grpCaixa);
+
+    // 1ª Venda — usa detalhados para verificar campo primeiraCompra
+    const pvLista=detalhados.filter(p=>{
+      const c=p?.contato;
+      if(!c) return false;
+      if(c.primeiraCompra===true) return true;
+      if(Number(c.numeroCompras||c.quantidadeCompras||0)===1) return true;
+      return false;
+    });
+    setRC('primeira',pvLista,soma(pvLista));
 
     // Ranking vendas
     const vendMap={};
