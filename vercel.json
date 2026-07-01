@@ -1,12 +1,8 @@
 {
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
-    { "source": "/api/bling", "destination": "/api/bling.js" },
-    { "source": "/api/token", "destination": "/api/token.js" },
-    { "source": "/((?!api).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
   ]
 }
