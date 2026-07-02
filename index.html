@@ -166,27 +166,22 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
       </div>
     </div>
 
-    <!-- DIREITO: RANKINGS MENSAIS -->
+    <!-- DIREITO: TICKET MÉDIO DO DIA -->
     <aside class="panel-right">
       <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
-        <!-- RANKING MÊS ATACADO -->
+        <!-- ATACADO TICKET MÉDIO -->
         <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-bottom:1px solid var(--border);">
-          <div class="pr-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);">
-            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:#F59E0B;">📅 ATACADO — MÊS</div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;" id="rank-mes-sub">carregando...</div>
-              <button class="btn-toggle" onclick="toggleValoresMes()" id="btn-toggle-mes">👁 Ocultar</button>
-            </div>
+          <div class="pr-header" style="padding:8px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:#F59E0B;">🏆 ATACADO — HOJE</div>
           </div>
-          <div class="ranking-list" id="ranking-mes-atacado"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+          <div class="ranking-list" id="ranking-ticket-atacado"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
         </div>
-        <!-- RANKING QUINZENA VAREJO -->
+        <!-- VAREJO TICKET MÉDIO -->
         <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-          <div class="pr-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);">
-            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:var(--blue);">📅 VAREJO — QUINZENA</div>
-            <div style="font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;" id="rank-quinzena-sub">carregando...</div>
+          <div class="pr-header" style="padding:8px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:var(--blue);">🏆 VAREJO — HOJE</div>
           </div>
-          <div class="ranking-list" id="ranking-quinzena-varejo"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+          <div class="ranking-list" id="ranking-ticket-varejo"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
         </div>
       </div>
     </aside>
@@ -316,28 +311,18 @@ function getMeta(total,tipo){
   return null;
 }
 
-function renderRankingMes(elId, dados, tipo){
-  const filtrados=dados.filter(v=>v.tipo===tipo);
+function renderRankingTicket(elId, dados, tipo){
+  const filtrados=dados.filter(v=>v.tipo===tipo&&v.qtd>0).sort((a,b)=>(b.total/b.qtd)-(a.total/a.qtd));
   if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Nenhum dado</div>';return;}
-  const metas=tipo==='varejo'?METAS_VAREJO:METAS_ATACADO;
-  const metaMax=metas[0].min;
+  const medals=['🥇','🥈','🥉'];
   document.getElementById(elId).innerHTML=filtrados.map((v,i)=>{
-    const meta=getMeta(v.total,tipo);
-    const proxMeta=metas.slice().reverse().find(m=>m.min>v.total);
-    const pctMeta=Math.min(Math.round((v.total/metaMax)*100),100);
-    const ticket=v.qtd?fmt(v.total/v.qtd):'—';
-    const barCor=meta?meta.cor:'var(--muted)';
-    return `<div class="rank-item" style="${meta?'background:rgba(255,255,255,.02)':''}">
-      <div class="rank-pos ${i<3?['p1','p2','p3'][i]:'pn'}" style="${meta?'background:rgba(255,255,255,.08);border-color:'+meta.cor+';color:'+meta.cor:''}">
-        ${meta?meta.emoji:i+1}
-      </div>
-      <div class="rank-info">
-        <div class="rank-name">${v.nome} ${meta?'<span style="font-size:.6rem;color:'+meta.cor+'">'+meta.label+'</span>':''}</div>
-        <div class="rank-meta">${v.qtd} ped · Ticket: ${ticket}${proxMeta?' · falta '+fmt(proxMeta.min-v.total)+' p/ '+proxMeta.emoji:''}</div>
-      </div>
-      <div class="rank-right"><div class="rank-val rank-val-mes" style="${meta?'color:'+meta.cor:''}">${fmt(v.total)}</div></div>
-      <div class="rank-bar-wrap" style="background:rgba(255,255,255,.05)">
-        <div class="rank-bar" style="width:${pctMeta}%;background:${barCor};${meta&&meta.label==='Diamante'?'box-shadow:0 0 6px '+meta.cor:''}"></div>
+    const ticket=fmt(v.total/v.qtd);
+    const medal=i<3?medals[i]:'';
+    return `<div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px;">
+      <div style="font-size:1.2rem;flex-shrink:0;">${medal||'<span style="font-size:.75rem;color:var(--muted2);width:20px;text-align:center;display:inline-block">'+(i+1)+'</span>'}</div>
+      <div style="flex:1;">
+        <div style="font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:2px;">${v.nome} <span style="font-size:.68rem;color:var(--muted2);font-weight:400">${v.qtd} venda${v.qtd>1?'s':''}</span></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700;color:var(--gold)">${ticket}</div>
       </div>
     </div>`;
   }).join('');
@@ -535,10 +520,8 @@ async function loadAll(){
     });
     const rankingQ=Object.values(vendMapQ).sort((a,b)=>b.total-a.total);
 
-    document.getElementById('rank-mes-sub').textContent=mesIni+' a '+hoje;
-    document.getElementById('rank-quinzena-sub').textContent=quinzIni+' a '+hoje;
-    renderRankingMes('ranking-mes-atacado',rankingMes,'atacado');
-    renderRankingMes('ranking-quinzena-varejo',rankingQ,'varejo');
+    renderRankingTicket('ranking-ticket-atacado',ranking,'atacado');
+    renderRankingTicket('ranking-ticket-varejo',ranking,'varejo');
 
     setBar(100);
     setStatus('');
