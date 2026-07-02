@@ -3,8 +3,8 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-let refreshToken = '6d74d34c8efe25d4587d99ad9bcb2d50ab5c87c5';
-let accessToken = '2262ca672eb9bf3aed4742bb1c155d7d1d93c091';
+let refreshToken = 'fd6fe877211bfe0c101b0b2213132d69f046ebb9';
+let accessToken = '76352263d312d6f6ede4a252b206c603f4cafd80';
 let tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
 
 function renewToken() {
@@ -31,7 +31,7 @@ function renewToken() {
             accessToken = json.access_token;
             if (json.refresh_token) refreshToken = json.refresh_token;
             tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-            console.log('Token renovado com sucesso!');
+            console.log('Token renovado com sucesso! Expira em 5h.');
             resolve(accessToken);
           } else {
             console.error('Erro ao renovar:', JSON.stringify(json));
@@ -47,13 +47,22 @@ function renewToken() {
 }
 
 async function getToken() {
-  if (!accessToken || Date.now() > tokenExpiry) {
+  // Sempre renova se faltam menos de 30 min para expirar
+  if (!accessToken || Date.now() > tokenExpiry - (30 * 60 * 1000)) {
     await renewToken();
   }
   return accessToken;
 }
 
+// Renova a cada 5 horas
 setInterval(() => renewToken().catch(console.error), 5 * 60 * 60 * 1000);
+
+// Renova imediatamente ao iniciar
+renewToken().then(() => {
+  console.log('Token inicial obtido com sucesso!');
+}).catch(e => {
+  console.error('Erro no token inicial:', e);
+});
 
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -75,7 +84,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ status: 'ok' }));
+  res.end(JSON.stringify({ status: 'ok', tokenValid: Date.now() < tokenExpiry }));
 });
 
 const PORT = process.env.PORT || 3000;
