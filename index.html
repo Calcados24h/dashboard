@@ -297,26 +297,48 @@ const isCancelado= p => getSitId(p)===11;
 const isCaixa    = p => p?.loja?.id===203331656||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('24')||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('caixa');
 
 // ── RENDER RANKING VENDAS ─────────────────────────────────────────
-function renderRankingMes(elId, dados, tipo, mostrarTicket=true){
+// Metas por tipo
+const METAS_VAREJO=[
+  {min:30000,emoji:'💎',label:'Diamante',cor:'#00E5FF',comissao:'4%'},
+  {min:21000,emoji:'🏅',label:'Ouro',cor:'var(--gold)',comissao:'3%'},
+  {min:15000,emoji:'🥈',label:'Prata',cor:'#C0C8D8',comissao:'2%'},
+];
+const METAS_ATACADO=[
+  {min:60000,emoji:'💎',label:'Diamante',cor:'#00E5FF'},
+  {min:50000,emoji:'🥇',label:'Ouro',cor:'var(--gold)'},
+  {min:45000,emoji:'🥈',label:'Prata',cor:'#C0C8D8'},
+  {min:35000,emoji:'🥉',label:'Bronze',cor:'#CD7F32'},
+];
+
+function getMeta(total,tipo){
+  const metas=tipo==='varejo'?METAS_VAREJO:METAS_ATACADO;
+  for(const m of metas){ if(total>=m.min) return m; }
+  return null;
+}
+
+function renderRankingMes(elId, dados, tipo){
   const filtrados=dados.filter(v=>v.tipo===tipo);
   if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Nenhum dado</div>';return;}
-  const maxVal=Math.max(filtrados[0].total,1);
-  const medals=['🥇','🥈','🥉'];
-  const pCls=['p1','p2','p3'];
-  const barClrA=['var(--gold)','#C0C8D8','#CD7F32','var(--orange)'];
-  const barClrV=['var(--blue)','var(--green)','var(--purple)','var(--orange)','#C0C8D8','#CD7F32','var(--gold)'];
-  const barClr=tipo==='atacado'?barClrA:barClrV;
+  const metas=tipo==='varejo'?METAS_VAREJO:METAS_ATACADO;
+  const metaMax=metas[0].min;
   document.getElementById(elId).innerHTML=filtrados.map((v,i)=>{
-    const pct=Math.round((v.total/maxVal)*100);
+    const meta=getMeta(v.total,tipo);
+    const proxMeta=metas.slice().reverse().find(m=>m.min>v.total);
+    const pctMeta=Math.min(Math.round((v.total/metaMax)*100),100);
     const ticket=v.qtd?fmt(v.total/v.qtd):'—';
-    return `<div class="rank-item">
-      <div class="rank-pos ${pCls[i]||'pn'}">${i<3?medals[i]:i+1}</div>
-      <div class="rank-info">
-        <div class="rank-name">${v.nome}</div>
-        <div class="rank-meta">${v.qtd} pedido(s) · Ticket: ${ticket}</div>
+    const barCor=meta?meta.cor:'var(--muted)';
+    return `<div class="rank-item" style="${meta?'background:rgba(255,255,255,.02)':''}">
+      <div class="rank-pos ${i<3?['p1','p2','p3'][i]:'pn'}" style="${meta?'background:rgba(255,255,255,.08);border-color:'+meta.cor+';color:'+meta.cor:''}">
+        ${meta?meta.emoji:i+1}
       </div>
-      <div class="rank-right"><div class="rank-val rank-val-mes">${fmt(v.total)}</div></div>
-      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:${barClr[i]||'var(--blue)'}"></div></div>
+      <div class="rank-info">
+        <div class="rank-name">${v.nome} ${meta?'<span style="font-size:.6rem;color:'+meta.cor+'">'+meta.label+'</span>':''}</div>
+        <div class="rank-meta">${v.qtd} ped · Ticket: ${ticket}${proxMeta?' · falta '+fmt(proxMeta.min-v.total)+' p/ '+proxMeta.emoji:''}</div>
+      </div>
+      <div class="rank-right"><div class="rank-val rank-val-mes" style="${meta?'color:'+meta.cor:''}">${fmt(v.total)}</div></div>
+      <div class="rank-bar-wrap" style="background:rgba(255,255,255,.05)">
+        <div class="rank-bar" style="width:${pctMeta}%;background:${barCor};${meta&&meta.label==='Diamante'?'box-shadow:0 0 6px '+meta.cor:''}"></div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -345,32 +367,7 @@ function renderRanking(elId, dados, tipo){
   }).join('');
 }
 
-// ── RENDER RANKING 1ª VENDA ───────────────────────────────────────
-function renderRankingPrimeira(pvLista){
-  const vendCount={};
-  pvLista.forEach(p=>{
-    const vId=p?.vendedor?.id;
-    if(!vId||!VENDEDORES[vId])return;
-    const nome=VENDEDORES[vId].nome;
-    vendCount[nome]=(vendCount[nome]||0)+1;
-  });
-  const ranking=Object.entries(vendCount).sort((a,b)=>b[1]-a[1]);
-  const maxQtd=ranking[0]?.[1]||1;
-  const medals=['🥇','🥈','🥉'];
-  const pCls=['p1','p2','p3'];
-  document.getElementById('rank-pv-sub').textContent=`hoje · ${pvLista.length} primeiras vendas`;
-  document.getElementById('ranking-primeira').innerHTML=ranking.length
-    ?ranking.map(([nome,qtd],i)=>{
-      const pct=Math.round((qtd/maxQtd)*100);
-      return `<div class="rank-item">
-        <div class="rank-pos ${pCls[i]||'pn'}">${i<3?medals[i]:i+1}</div>
-        <div class="rank-info"><div class="rank-name">${nome}</div><div class="rank-meta">${qtd} primeira${qtd>1?'s':''} venda${qtd>1?'s':''}</div></div>
-        <div class="rank-right"><div class="rank-val qtd">${qtd}</div></div>
-        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:var(--gold)"></div></div>
-      </div>`;
-    }).join('')
-    :'<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Nenhuma 1ª venda ainda</div>';
-}
+
 
 // ── LOAD ──────────────────────────────────────────────────────────
 async function loadAll(){
@@ -432,21 +429,7 @@ async function loadAll(){
     const grpCaixa=detalhados.filter(isCaixa);
     setRC('caixa',grpCaixa);
 
-    // 1ª Venda — clientes cadastrados hoje
-    setStatus('Buscando 1ª vendas...');
-    let contatosHoje=new Set(),ctPage=1,ctDone=false;
-    while(!ctDone){
-      const ctd=await blingGet('/contatos?pagina='+ctPage+'&limite=100&dataInicial='+hoje+'&dataFinal='+hoje);
-      const ctItems=ctd?.data||[];
-      ctItems.forEach(c=>contatosHoje.add(c.id));
-      ctDone=ctItems.length<100||ctPage>=5;
-      ctPage++;
-    }
-    const pvLista=listaAtiva.filter(p=>{
-      const id=p?.contato?.id;
-      return id && contatosHoje.has(id);
-    });
-    setRC('primeira',pvLista,soma(pvLista));
+
 
     // Ranking vendas
     const vendMap={};
@@ -462,17 +445,7 @@ async function loadAll(){
     renderRanking('ranking-atacado',ranking,'atacado');
     renderRanking('ranking-varejo',ranking,'varejo');
 
-    // Detalhes das 1ª vendas para ranking
-    setStatus('Ranking 1ª venda...');
-    const pvDetalhados=[];
-    for(let i=0;i<Math.min(pvLista.length,60);i++){
-      try{
-        await sleep(400);
-        const d=await blingGet('/pedidos/vendas/'+pvLista[i].id);
-        if(d?.data) pvDetalhados.push(d.data);
-      }catch(e){}
-    }
-    renderRankingPrimeira(pvDetalhados);
+
 
     // Ticker
     const tItems=listaAtiva.slice(0,15).map(p=>`<span class="ti">📦 #${p.numero} <strong>${getNome(p)}</strong> · ${fmt(getValor(p))}</span>`).join('');
