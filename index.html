@@ -126,7 +126,7 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
         <div class="route-card loja"><div class="rc-label">Em Loja</div><div class="rc-row"><div class="rc-num" id="r-loja">—</div><div class="rc-val" id="rv-loja"></div></div></div>
         <div class="route-card reserva"><div class="rc-label">Em Reserva</div><div class="rc-row"><div class="rc-num" id="r-reserva">—</div><div class="rc-val" id="rv-reserva"></div></div></div>
         <div class="route-card caixa"><div class="rc-label">Frente de Caixa</div><div class="rc-row"><div class="rc-num" id="r-caixa">—</div><div class="rc-val" id="rv-caixa"></div></div></div>
-        <div class="route-card primeira"><div class="rc-label">1ª Venda</div><div class="rc-row"><div class="rc-num" id="r-primeira">—</div><div class="rc-val" id="rv-primeira"></div></div></div>
+
         <div class="route-card cancelado"><div class="rc-label">Cancelados</div><div class="rc-row"><div class="rc-num" id="r-cancelado">—</div><div class="rc-val" id="rv-cancelado"></div></div></div>
       </div>
       <div class="total-box">
@@ -166,13 +166,29 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
       </div>
     </div>
 
-    <!-- DIREITO: RANKING 1ª VENDA -->
+    <!-- DIREITO: RANKINGS MENSAIS -->
     <aside class="panel-right">
-      <div class="pr-header">
-        <div class="rh-title primeira" style="font-size:.95rem;">⭐ RANKING 1ª VENDA</div>
-        <div class="rh-sub" id="rank-pv-sub">hoje</div>
+      <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+        <!-- RANKING MÊS ATACADO -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-bottom:1px solid var(--border);">
+          <div class="pr-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:#F59E0B;">📅 ATACADO — MÊS</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;" id="rank-mes-sub">carregando...</div>
+              <button class="btn-toggle" onclick="toggleValoresMes()" id="btn-toggle-mes">👁 Ocultar</button>
+            </div>
+          </div>
+          <div class="ranking-list" id="ranking-mes-atacado"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+        </div>
+        <!-- RANKING QUINZENA VAREJO -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <div class="pr-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:var(--blue);">📅 VAREJO — QUINZENA</div>
+            <div style="font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;" id="rank-quinzena-sub">carregando...</div>
+          </div>
+          <div class="ranking-list" id="ranking-quinzena-varejo"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+        </div>
       </div>
-      <div class="ranking-list" id="ranking-primeira"><div style="text-align:center;padding:30px;color:var(--muted)">Carregando...</div></div>
     </aside>
   </main>
   <footer>
@@ -226,6 +242,15 @@ function toggleValores(){
   document.getElementById('btn-toggle').textContent=valoresOcultos?'👁 Mostrar':'👁 Ocultar';
 }
 
+let valoresMesOcultos=false;
+function toggleValoresMes(){
+  valoresMesOcultos=!valoresMesOcultos;
+  document.querySelectorAll('.rank-val-mes').forEach(el=>{
+    el.style.opacity=valoresMesOcultos?'0':'1';
+  });
+  document.getElementById('btn-toggle-mes').textContent=valoresMesOcultos?'👁 Mostrar':'👁 Ocultar';
+}
+
 // ── TOKEN ─────────────────────────────────────────────────────────
 async function refreshTokenFn(){
   try{
@@ -272,6 +297,30 @@ const isCancelado= p => getSitId(p)===11;
 const isCaixa    = p => p?.loja?.id===203331656||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('24')||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('caixa');
 
 // ── RENDER RANKING VENDAS ─────────────────────────────────────────
+function renderRankingMes(elId, dados, tipo, mostrarTicket=true){
+  const filtrados=dados.filter(v=>v.tipo===tipo);
+  if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Nenhum dado</div>';return;}
+  const maxVal=Math.max(filtrados[0].total,1);
+  const medals=['🥇','🥈','🥉'];
+  const pCls=['p1','p2','p3'];
+  const barClrA=['var(--gold)','#C0C8D8','#CD7F32','var(--orange)'];
+  const barClrV=['var(--blue)','var(--green)','var(--purple)','var(--orange)','#C0C8D8','#CD7F32','var(--gold)'];
+  const barClr=tipo==='atacado'?barClrA:barClrV;
+  document.getElementById(elId).innerHTML=filtrados.map((v,i)=>{
+    const pct=Math.round((v.total/maxVal)*100);
+    const ticket=v.qtd?fmt(v.total/v.qtd):'—';
+    return `<div class="rank-item">
+      <div class="rank-pos ${pCls[i]||'pn'}">${i<3?medals[i]:i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${v.nome}</div>
+        <div class="rank-meta">${v.qtd} pedido(s) · Ticket: ${ticket}</div>
+      </div>
+      <div class="rank-right"><div class="rank-val rank-val-mes">${fmt(v.total)}</div></div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:${barClr[i]||'var(--blue)'}"></div></div>
+    </div>`;
+  }).join('');
+}
+
 function renderRanking(elId, dados, tipo){
   const filtrados=dados.filter(v=>v.tipo===tipo);
   if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Nenhum dado</div>';return;}
@@ -428,6 +477,95 @@ async function loadAll(){
     // Ticker
     const tItems=listaAtiva.slice(0,15).map(p=>`<span class="ti">📦 #${p.numero} <strong>${getNome(p)}</strong> · ${fmt(getValor(p))}</span>`).join('');
     document.getElementById('ticker').innerHTML=tItems+tItems;
+
+    // ── RANKING MENSAL E QUINZENAL ──
+    setStatus('Carregando ranking do mês...');
+    const agora=new Date();
+    const dia=agora.getDate();
+    const mesIni=hoje.substring(0,7)+'-01';
+    const mesStr=hoje.substring(0,7);
+    const ultimoDia=new Date(agora.getFullYear(),agora.getMonth()+1,0).getDate();
+    const mesFim=hoje.substring(0,7)+'-'+String(ultimoDia).padStart(2,'0');
+
+    // Quinzena
+    let quinzIni,quinzFim;
+    if(dia<=15){
+      quinzIni=hoje.substring(0,7)+'-01';
+      quinzFim=hoje.substring(0,7)+'-15';
+    } else {
+      quinzIni=hoje.substring(0,7)+'-16';
+      quinzFim=mesFim;
+    }
+
+    // Busca pedidos do mês para atacado
+    let pedidosMes=[],pmPage=1,pmDone=false;
+    while(!pmDone){
+      const pmd=await blingGet('/pedidos/vendas?pagina='+pmPage+'&limite=100&dataInicial='+mesIni+'&dataFinal='+hoje);
+      const pmi=pmd?.data||[];
+      pedidosMes=pedidosMes.concat(pmi);
+      pmDone=pmi.length<100||pmPage>=10;
+      pmPage++;
+    }
+
+    // Busca detalhes do mês (limitado a 50 para não travar)
+    const detalhadosMes=[];
+    const amostaMes=pedidosMes.slice(0,50);
+    for(let i=0;i<amostaMes.length;i++){
+      try{
+        await sleep(400);
+        const d=await blingGet('/pedidos/vendas/'+amostaMes[i].id);
+        if(d?.data) detalhadosMes.push(d.data);
+      }catch(e){detalhadosMes.push(amostaMes[i]);}
+    }
+
+    // Ranking mensal atacado
+    const vendMapMes={};
+    detalhadosMes.forEach(p=>{
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId]) return;
+      const {nome,tipo}=VENDEDORES[vId];
+      if(!vendMapMes[nome])vendMapMes[nome]={nome,tipo,total:0,qtd:0};
+      vendMapMes[nome].total+=getValor(p);
+      vendMapMes[nome].qtd++;
+    });
+    const rankingMes=Object.values(vendMapMes).sort((a,b)=>b.total-a.total);
+
+    // Busca pedidos da quinzena para varejo
+    let pedidosQ=[],pqPage=1,pqDone=false;
+    while(!pqDone){
+      const pqd=await blingGet('/pedidos/vendas?pagina='+pqPage+'&limite=100&dataInicial='+quinzIni+'&dataFinal='+hoje);
+      const pqi=pqd?.data||[];
+      pedidosQ=pedidosQ.concat(pqi);
+      pqDone=pqi.length<100||pqPage>=10;
+      pqPage++;
+    }
+
+    const detalhadosQ=[];
+    const amostraQ=pedidosQ.slice(0,50);
+    for(let i=0;i<amostraQ.length;i++){
+      try{
+        await sleep(400);
+        const d=await blingGet('/pedidos/vendas/'+amostraQ[i].id);
+        if(d?.data) detalhadosQ.push(d.data);
+      }catch(e){detalhadosQ.push(amostraQ[i]);}
+    }
+
+    const vendMapQ={};
+    detalhadosQ.forEach(p=>{
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId]) return;
+      const {nome,tipo}=VENDEDORES[vId];
+      if(tipo!=='varejo') return;
+      if(!vendMapQ[nome])vendMapQ[nome]={nome,tipo,total:0,qtd:0};
+      vendMapQ[nome].total+=getValor(p);
+      vendMapQ[nome].qtd++;
+    });
+    const rankingQ=Object.values(vendMapQ).sort((a,b)=>b.total-a.total);
+
+    document.getElementById('rank-mes-sub').textContent=mesIni+' a '+hoje;
+    document.getElementById('rank-quinzena-sub').textContent=quinzIni+' a '+hoje;
+    renderRankingMes('ranking-mes-atacado',rankingMes,'atacado');
+    renderRankingMes('ranking-quinzena-varejo',rankingQ,'varejo');
 
     setBar(100);
     setStatus('');
