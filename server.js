@@ -3,8 +3,8 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-let refreshToken = '22b15e97b7482225ef587f5777f2a6fde7c916f9';
-let accessToken = '4fd3c4e7f4d3146caf9bb676a91c5de1c844bbb3';
+let refreshToken = 'dce74d4f91accd587fd4e447e8c4ebda7c0bf83e';
+let accessToken = '1940079a270bb554974c3e8029869a381dc8a1e3';
 let tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
 
 function renewToken() {
