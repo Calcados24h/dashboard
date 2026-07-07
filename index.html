@@ -423,6 +423,7 @@ async function loadAll(){
     // Ranking vendas
     const vendMap={};
     detalhados.forEach(p=>{
+      if(getSitId(p)===11) return; // ignora cancelados
       const vId=p?.vendedor?.id;
       if(!vId||!VENDEDORES[vId])return;
       const {nome,tipo}=VENDEDORES[vId];
