@@ -202,12 +202,10 @@ const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278e
 const VENDEDORES = {
   15596884435:{nome:'Carla',tipo:'atacado'},
   15596884242:{nome:'Laura',tipo:'atacado'},
-  15596375893:{nome:'Ana Karine',tipo:'atacado'},
-  15596509608:{nome:'Bárbara',tipo:'atacado'},
   10619057007:{nome:'Lucas',tipo:'varejo'},
+  15596933252:{nome:'Ana Karollyne',tipo:'varejo'},
   15596868930:{nome:'Dorathy',tipo:'varejo'},
   15596730913:{nome:'Emilli',tipo:'varejo'},
-  15596486608:{nome:'Júnior',tipo:'varejo'},
   8150695375: {nome:'Karol',tipo:'varejo'},
   15596884243:{nome:'Jessica',tipo:'varejo'},
   15596884245:{nome:'Larissa',tipo:'varejo'},
@@ -335,15 +333,16 @@ function renderRankingTicket(elId, dados, tipo){
 function renderRanking(elId, dados, tipo){
   const filtrados=dados.filter(v=>v.tipo===tipo);
   if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Nenhum dado</div>';return;}
-  const maxVal=Math.max(filtrados[0].total,2000);
+  const maxVal=Math.max(filtrados[0].total, tipo==='varejo'?META_VAREJO:META_ATACADO);
   const medals=['🥇','🥈','🥉'];
   const pCls=['p1','p2','p3'];
   const barClrA=['var(--gold)','#C0C8D8','#CD7F32','var(--orange)'];
   const barClrV=['var(--blue)','var(--green)','var(--purple)','var(--orange)','#C0C8D8','#CD7F32','var(--gold)'];
   const barClr=tipo==='atacado'?barClrA:barClrV;
   document.getElementById(elId).innerHTML=filtrados.map((v,i)=>{
-    const pct=Math.min(Math.round((v.total/2000)*100),100);
-    const bateu=v.total>=2000;
+    const pct=Math.min(Math.round((v.total/(tipo==='varejo'?META_VAREJO:META_ATACADO))*100),100);
+    const meta=tipo==='varejo'?META_VAREJO:META_ATACADO;
+      const bateu=v.total>=meta;
     return `<div class="rank-item" style="${bateu?'background:rgba(245,197,66,.04)':''}">
       <div class="rank-pos ${pCls[i]||'pn'}">${i<3?medals[i]:i+1}</div>
       <div class="rank-info">
