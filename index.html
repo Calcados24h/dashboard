@@ -309,9 +309,6 @@ function getMeta(total,tipo){
   return null;
 }
 
-const META_VAREJO = 2000;
-const META_ATACADO = 2000;
-
 function renderRankingTicket(elId, dados, tipo){
   // Ordena por quantidade de atendimentos (maior primeiro)
   const filtrados=dados.filter(v=>v.tipo===tipo&&v.qtd>0).sort((a,b)=>b.qtd-a.qtd);
@@ -332,6 +329,9 @@ function renderRankingTicket(elId, dados, tipo){
     </div>`;
   }).join('');
 }
+
+const META_VAREJO = 2000;
+const META_ATACADO = 2000;
 
 function renderRanking(elId, dados, tipo){
   const filtrados=dados.filter(v=>v.tipo===tipo);
