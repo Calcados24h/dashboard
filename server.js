@@ -3,35 +3,82 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-let refreshToken = 'eec76a3469052708aeb678001748d3e8b0e18e35';
-let accessToken = '0bd16d0050e2beb52b6eb7be73e7c673b1bbd11a';
-let tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
+const INITIAL_REFRESH = '0bd16d0050e2beb52b6eb7be73e7c673b1bbd11a';
 
-function renewToken() {
+// KV helpers usando REST API do Upstash
+async function kvGet(key) {
+  const url = process.env.BLING_KV_REST_API_URL;
+  const token = process.env.BLING_KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const res = await fetchHttp(${url}/get/${key}, { headers: { Authorization: Bearer ${token} } });
+    const data = JSON.parse(res);
+    return data.result || null;
+  } catch(e) { return null; }
+}
+
+async function kvSet(key, value, exSeconds) {
+  const url = process.env.BLING_KV_REST_API_URL;
+  const token = process.env.BLING_KV_REST_API_TOKEN;
+  if (!url || !token) return;
+  try {
+    const path = exSeconds ? /set/${key}/${encodeURIComponent(value)}?ex=${exSeconds} : /set/${key}/${encodeURIComponent(value)};
+    await fetchHttp(${url}${path}, { headers: { Authorization: Bearer ${token} } });
+  } catch(e) {}
+}
+
+function fetchHttp(urlStr, options = {}) {
   return new Promise((resolve, reject) => {
-    const creds = Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64');
-    const body = 'grant_type=refresh_token&refresh_token=' + refreshToken;
+    const mod = urlStr.startsWith('https') ? https : http;
+    const urlObj = new URL(urlStr);
+    const req = mod.request({
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: options.method || 'GET',
+      headers: options.headers || {}
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
 
+let accessToken = '';
+let refreshToken = '';
+let tokenExpiry = 0;
+
+async function renewToken() {
+  const rt = refreshToken || await kvGet('bling_refresh_token') || INITIAL_REFRESH;
+  const creds = Buffer.from(${CLIENT_ID}:${CLIENT_SECRET}).toString('base64');
+  const body = grant_type=refresh_token&refresh_token=${rt};
+
+  return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: 'www.bling.com.br',
       path: '/Api/v3/oauth/token',
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + creds,
+        'Authorization': Basic ${creds},
         'Content-Length': Buffer.byteLength(body)
       }
     }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
-      res.on('end', () => {
+      res.on('end', async () => {
         try {
           const json = JSON.parse(data);
           if (json.access_token) {
             accessToken = json.access_token;
-            if (json.refresh_token) refreshToken = json.refresh_token;
+            refreshToken = json.refresh_token || rt;
             tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-            console.log('Token renovado com sucesso! Expira em 5h.');
+            // Salva no KV
+            await kvSet('bling_access_token', accessToken, 19800);
+            await kvSet('bling_refresh_token', refreshToken);
+            console.log('Token renovado e salvo no KV!');
             resolve(accessToken);
           } else {
             console.error('Erro ao renovar:', JSON.stringify(json));
@@ -47,9 +94,16 @@ function renewToken() {
 }
 
 async function getToken() {
-  // Sempre renova se faltam menos de 30 min para expirar
+  // Tenta buscar do KV primeiro
   if (!accessToken || Date.now() > tokenExpiry - (30 * 60 * 1000)) {
-    await renewToken();
+    const saved = await kvGet('bling_access_token');
+    if (saved) {
+      accessToken = saved;
+      tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
+      console.log('Token recuperado do KV!');
+    } else {
+      await renewToken();
+    }
   }
   return accessToken;
 }
@@ -57,18 +111,13 @@ async function getToken() {
 // Renova a cada 5 horas
 setInterval(() => renewToken().catch(console.error), 5 * 60 * 60 * 1000);
 
-// Renova imediatamente ao iniciar
-renewToken().then(() => {
-  console.log('Token inicial obtido com sucesso!');
-}).catch(e => {
-  console.error('Erro no token inicial:', e);
-});
+// Inicializa
+getToken().then(t => console.log('Token inicial OK:', t.substring(0,10)+'...')).catch(console.error);
 
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
 
   if (req.url === '/token') {
@@ -84,7 +133,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ status: 'ok', tokenValid: Date.now() < tokenExpiry }));
+  res.end(JSON.stringify({ status: 'ok' }));
 });
 
 const PORT = process.env.PORT || 3000;
