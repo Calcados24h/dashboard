@@ -3,7 +3,7 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-const INITIAL_REFRESH = '0bd16d0050e2beb52b6eb7be73e7c673b1bbd11a';
+const INITIAL_REFRESH = '1f49f39d3864f0fda73a7fd12ddb745dcb67a0c8';
 
 // KV helpers usando REST API do Upstash
 async function kvGet(key) {
