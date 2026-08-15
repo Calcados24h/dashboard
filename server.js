@@ -11,7 +11,7 @@ async function kvGet(key) {
   const token = process.env.BLING_KV_REST_API_TOKEN;
   if (!url || !token) return null;
   try {
-    const res = await fetchHttp(${url}/get/${key}, { headers: { Authorization: Bearer ${token} } });
+    const res = await fetchHttp(url + "/get/" + key, { headers: { Authorization: "Bearer " + token } });
     const data = JSON.parse(res);
     return data.result || null;
   } catch(e) { return null; }
@@ -22,8 +22,8 @@ async function kvSet(key, value, exSeconds) {
   const token = process.env.BLING_KV_REST_API_TOKEN;
   if (!url || !token) return;
   try {
-    const path = exSeconds ? /set/${key}/${encodeURIComponent(value)}?ex=${exSeconds} : /set/${key}/${encodeURIComponent(value)};
-    await fetchHttp(${url}${path}, { headers: { Authorization: Bearer ${token} } });
+    const path = exSeconds ? "/set/" + key + "/" + encodeURIComponent(value) + "?ex=" + exSeconds : "/set/" + key + "/" + encodeURIComponent(value);
+    await fetchHttp(url + path, { headers: { Authorization: "Bearer " + token } });
   } catch(e) {}
 }
 
