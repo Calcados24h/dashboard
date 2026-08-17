@@ -6,7 +6,7 @@
 <title>Calçados 24H — Painel de Vendas</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,700&family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+,::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{--bg:#07080A;--s1:#0F1115;--s2:#151820;--border:#1E2229;--gold:#F5C542;--green:#22C55E;--blue:#3B82F6;--orange:#F97316;--red:#EF4444;--purple:#A855F7;--text:#F0F2F5;--muted:#5A6070;--muted2:#8A95A5;}
 html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;}
 #app{display:grid;grid-template-rows:52px 1fr 30px;height:100vh;}
@@ -119,7 +119,7 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
     <aside class="panel-left">
       <div class="panel-title">
         <span class="panel-title-txt">📦 PEDIDOS HOJE</span>
-        <button class="btn-toggle" onclick="toggleValores()" id="btn-toggle">👁 Ocultar</button>
+        <button class="btn-toggle" onclick="toggleValores()" id="btn-toggle">👁️ Ocultar</button>
       </div>
       <div class="route-cards">
         <div class="route-card entrega"><div class="rc-label">Rota de Entrega</div><div class="rc-row"><div class="rc-num" id="r-entrega">—</div><div class="rc-val" id="rv-entrega"></div></div></div>
@@ -166,22 +166,24 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
       </div>
     </div>
 
-    <!-- DIREITO: TICKET MÉDIO DO DIA -->
+    <!-- DIREITO: RANKING TOTAL MÊS/QUINZENA -->
     <aside class="panel-right">
       <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
-        <!-- ATACADO TICKET MÉDIO -->
+        <!-- ATACADO MÊS -->
         <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-bottom:1px solid var(--border);">
-          <div class="pr-header" style="padding:8px 14px;border-bottom:1px solid var(--border);">
-            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:#F59E0B;">🏆 ATACADO — HOJE</div>
+          <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:#F59E0B;">📅 ATACADO — MÊS</div>
+            <div style="font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;" id="sub-atacado-mes">carregando...</div>
           </div>
-          <div class="ranking-list" id="ranking-ticket-atacado"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+          <div class="ranking-list" id="ranking-mes-atacado"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
         </div>
-        <!-- VAREJO TICKET MÉDIO -->
+        <!-- VAREJO QUINZENA -->
         <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-          <div class="pr-header" style="padding:8px 14px;border-bottom:1px solid var(--border);">
-            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:var(--blue);">🏆 VAREJO — HOJE</div>
+          <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:var(--blue);">📅 VAREJO — QUINZENA</div>
+            <div style="font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;" id="sub-varejo-quinzena">carregando...</div>
           </div>
-          <div class="ranking-list" id="ranking-ticket-varejo"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+          <div class="ranking-list" id="ranking-quinzena-varejo"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
         </div>
       </div>
     </aside>
@@ -232,7 +234,7 @@ function toggleValores(){
   document.querySelectorAll('.rc-val,.tb-sub').forEach(el=>{
     el.classList.toggle('hidden',valoresOcultos);
   });
-  document.getElementById('btn-toggle').textContent=valoresOcultos?'👁 Mostrar':'👁 Ocultar';
+  document.getElementById('btn-toggle').textContent=valoresOcultos?'👁️ Mostrar':'👁️ Ocultar';
 }
 
 let valoresMesOcultos=false;
@@ -241,7 +243,7 @@ function toggleValoresMes(){
   document.querySelectorAll('.rank-val-mes').forEach(el=>{
     el.style.opacity=valoresMesOcultos?'0':'1';
   });
-  document.getElementById('btn-toggle-mes').textContent=valoresMesOcultos?'👁 Mostrar':'👁 Ocultar';
+  document.getElementById('btn-toggle-mes').textContent=valoresMesOcultos?'👁️ Mostrar':'👁️ Ocultar';
 }
 
 // ── TOKEN ─────────────────────────────────────────────────────────
@@ -361,6 +363,25 @@ function renderRanking(elId, dados, tipo){
 
 
 // ── LOAD ──────────────────────────────────────────────────────────
+
+function renderRankingPeriodo(elId, dados, tipo){
+  const filtrados=dados.filter(function(v){return v.tipo===tipo&&v.total>0;}).sort(function(a,b){return b.total-a.total;});
+  if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Nenhum dado</div>';return;}
+  const maxVal=filtrados[0].total||1;
+  const medals=['🥇','🥈','🥉'];
+  const pCls=['p1','p2','p3'];
+  document.getElementById(elId).innerHTML=filtrados.map(function(v,i){
+    const pct=Math.round((v.total/maxVal)*100);
+    const ticket=v.qtd?fmt(v.total/v.qtd):'—';
+    return '<div class="rank-item">'+
+      '<div class="rank-pos '+(pCls[i]||'pn')+'">'+(i<3?medals[i]:i+1)+'</div>'+
+      '<div class="rank-info"><div class="rank-name">'+v.nome+'</div><div class="rank-meta">'+v.qtd+' ped · ticket '+ticket+'</div></div>'+
+      '<div class="rank-right"><div class="rank-val">'+fmt(v.total)+'</div></div>'+
+      '<div class="rank-bar-wrap"><div class="rank-bar" style="width:'+pct+'%;background:var(--gold)"></div></div>'+
+    '</div>';
+  }).join('');
+}
+
 async function loadAll(){
   setBar(5);
   setStatus('Carregando pedidos...');
@@ -412,7 +433,7 @@ async function loadAll(){
         else detalhados.push(listaAtiva[i]);
       }catch(e){detalhados.push(listaAtiva[i]);}
       setBar(30+Math.round((i/LIMITE)*55));
-      if(i%5===0) setStatus(`Detalhes: ${i+1}/${LIMITE}`);
+      if(i%5===0) setStatus(Detalhes: ${i+1}/${LIMITE});
     }
     setBar(87);
 
@@ -439,8 +460,83 @@ async function loadAll(){
 
 
 
+    // ── RANKING PERÍODO (MÊS/QUINZENA) ──
+    setStatus('Carregando ranking do período...');
+    const hoje2=new Date();
+    const dia2=hoje2.getDate();
+    const mesIni2=hoje.substring(0,7)+'-01';
+
+    // Quinzena varejo
+    let quinzIni2;
+    if(dia2<=15){ quinzIni2=hoje.substring(0,7)+'-01'; }
+    else { quinzIni2=hoje.substring(0,7)+'-16'; }
+
+    // Busca pedidos do mês (atacado - só atendidos, sem cancelados)
+    let pedMes=[],pmPg=1,pmDone=false;
+    while(!pmDone){
+      const pmd=await blingGet('/pedidos/vendas?pagina='+pmPg+'&limite=100&dataInicial='+mesIni2+'&dataFinal='+hoje);
+      const pmi=pmd?.data||[];
+      pedMes=pedMes.concat(pmi.filter(p=>getSitId(p)!==11)); // remove cancelados
+      pmDone=pmi.length<100||pmPg>=10;
+      pmPg++;
+    }
+
+    // Busca pedidos da quinzena (varejo - todos exceto cancelados)
+    let pedQ=[],pqPg=1,pqDone=false;
+    while(!pqDone){
+      const pqd=await blingGet('/pedidos/vendas?pagina='+pqPg+'&limite=100&dataInicial='+quinzIni2+'&dataFinal='+hoje);
+      const pqi=pqd?.data||[];
+      pedQ=pedQ.concat(pqi.filter(p=>getSitId(p)!==11));
+      pqDone=pqi.length<100||pqPg>=10;
+      pqPg++;
+    }
+
+    // Busca detalhes período (limitado para não travar)
+    const detPeriodo=[];
+    const amPeriodo=[...new Map([...pedMes,...pedQ].map(p=>[p.id,p])).values()].slice(0,60);
+    for(let i=0;i<amPeriodo.length;i++){
+      try{
+        await sleep(400);
+        const d=await blingGet('/pedidos/vendas/'+amPeriodo[i].id);
+        if(d?.data) detPeriodo.push(d.data);
+      }catch(e){detPeriodo.push(amPeriodo[i]);}
+      if(i%5===0) setStatus('Período: '+(i+1)+'/'+amPeriodo.length);
+    }
+
+    // Monta ranking atacado (mês - só atendidos)
+    const idsMes=new Set(pedMes.filter(p=>getSitId(p)===9).map(p=>p.id));
+    const vmAtacado={};
+    detPeriodo.filter(p=>idsMes.has(p.id)).forEach(p=>{
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId]||VENDEDORES[vId].tipo!=='atacado') return;
+      const nome=VENDEDORES[vId].nome;
+      if(!vmAtacado[nome]) vmAtacado[nome]={nome,tipo:'atacado',total:0,qtd:0};
+      vmAtacado[nome].total+=getValor(p);
+      vmAtacado[nome].qtd++;
+    });
+
+    // Monta ranking varejo (quinzena - todos exceto cancelados)
+    const idsQ=new Set(pedQ.map(p=>p.id));
+    const vmVarejo={};
+    detPeriodo.filter(p=>idsQ.has(p.id)).forEach(p=>{
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId]||VENDEDORES[vId].tipo!=='varejo') return;
+      const nome=VENDEDORES[vId].nome;
+      if(!vmVarejo[nome]) vmVarejo[nome]={nome,tipo:'varejo',total:0,qtd:0};
+      vmVarejo[nome].total+=getValor(p);
+      vmVarejo[nome].qtd++;
+    });
+
+    const rankingPeriodoAtacado=Object.values(vmAtacado).sort((a,b)=>b.total-a.total);
+    const rankingPeriodoVarejo=Object.values(vmVarejo).sort((a,b)=>b.total-a.total);
+
+    document.getElementById('sub-atacado-mes').textContent=mesIni2+' a '+hoje+' (atendidos)';
+    document.getElementById('sub-varejo-quinzena').textContent=quinzIni2+' a '+hoje;
+    renderRankingPeriodo('ranking-mes-atacado',rankingPeriodoAtacado,'atacado');
+    renderRankingPeriodo('ranking-quinzena-varejo',rankingPeriodoVarejo,'varejo');
+
     // Ticker
-    const tItems=listaAtiva.slice(0,15).map(p=>`<span class="ti">📦 #${p.numero} <strong>${getNome(p)}</strong> · ${fmt(getValor(p))}</span>`).join('');
+    const tItems=listaAtiva.slice(0,15).map(p=><span class="ti">📦 #${p.numero} <strong>${getNome(p)}</strong> · ${fmt(getValor(p))}</span>).join('');
     document.getElementById('ticker').innerHTML=tItems+tItems;
 
     // ── RANKING MENSAL E QUINZENAL ──
@@ -527,8 +623,8 @@ async function loadAll(){
     });
     const rankingQ=Object.values(vendMapQ).sort((a,b)=>b.total-a.total);
 
-    renderRankingTicket('ranking-ticket-atacado',ranking,'atacado');
-    renderRankingTicket('ranking-ticket-varejo',ranking,'varejo');
+    renderRankingPeriodo('ranking-mes-atacado',rankingPeriodoAtacado,'atacado');
+    renderRankingPeriodo('ranking-quinzena-varejo',rankingPeriodoVarejo,'varejo');
 
     setBar(100);
     setStatus('');
