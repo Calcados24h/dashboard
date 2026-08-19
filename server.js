@@ -1,143 +1,574 @@
-const https = require('https');
-const http = require('http');
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Calçados 24H — Painel de Vendas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,700&family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#07080A;--s1:#0F1115;--s2:#151820;--border:#1E2229;--gold:#F5C542;--green:#22C55E;--blue:#3B82F6;--orange:#F97316;--red:#EF4444;--purple:#A855F7;--text:#F0F2F5;--muted:#5A6070;--muted2:#8A95A5;}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;}
+#app{display:grid;grid-template-rows:52px 1fr 30px;height:100vh;}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--s1);border-bottom:1px solid var(--border);}
+.brand-wrap{display:flex;flex-direction:column;gap:1px;}
+.brand{font-family:'Open Sans',sans-serif;font-size:1.1rem;font-weight:700;font-style:italic;color:#E53935;}
+.slogan{font-family:'Open Sans',sans-serif;font-size:.58rem;font-weight:700;color:#fff;opacity:.75;letter-spacing:.04em;}
+.header-mid{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted2);letter-spacing:.06em;}
+.header-right{display:flex;align-items:center;gap:12px;}
+#clock{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:var(--gold);letter-spacing:.1em;}
+.pill-live{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:20px;padding:3px 10px;font-size:.6rem;font-weight:700;color:var(--green);letter-spacing:.12em;}
+.pill-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+main{display:grid;grid-template-columns:220px 1fr 1fr 240px;overflow:hidden;}
 
-const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
+/* ESQUERDO */
+.panel-left{background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.panel-title{padding:8px 14px 6px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.panel-title-txt{font-family:'Syne',sans-serif;font-size:.58rem;font-weight:800;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;}
+.btn-toggle{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted2);font-size:.58rem;cursor:pointer;padding:2px 7px;font-family:'Inter',sans-serif;}
+.btn-toggle:hover{border-color:var(--gold);color:var(--gold);}
+.route-cards{padding:8px 10px 0;display:flex;flex-direction:column;gap:6px;}
+.route-card{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:9px 12px;position:relative;overflow:hidden;}
+.route-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.route-card.entrega::before{background:var(--green);}
+.route-card.loja::before{background:var(--blue);}
+.route-card.reserva::before{background:var(--orange);}
+.route-card.caixa::before{background:var(--purple);}
+.route-card.primeira::before{background:var(--gold);}
+.route-card.cancelado::before{background:var(--red);}
+.rc-label{font-size:.55rem;font-weight:700;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.rc-row{display:flex;align-items:flex-end;justify-content:space-between;}
+.rc-num{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;line-height:1;}
+.route-card.entrega .rc-num{color:var(--green);}
+.route-card.loja .rc-num{color:var(--blue);}
+.route-card.reserva .rc-num{color:var(--orange);}
+.route-card.caixa .rc-num{color:var(--purple);}
+.route-card.primeira .rc-num{color:var(--gold);}
+.route-card.cancelado .rc-num{color:var(--red);}
+.rc-val{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;color:var(--muted2);transition:opacity .3s;}
+.rc-val.hidden{opacity:0;}
+.total-box{margin:8px 10px;background:linear-gradient(135deg,rgba(245,197,66,.08),rgba(245,197,66,.02));border:1px solid rgba(245,197,66,.2);border-radius:7px;padding:9px 12px;}
+.tb-label{font-size:.55rem;font-weight:700;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:2px;}
+.tb-num{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--gold);}
+.tb-sub{font-size:.6rem;color:var(--muted2);margin-top:1px;transition:opacity .3s;}
+.tb-sub.hidden{opacity:0;}
+
+/* RANKINGS */
+.panel-ranking{display:flex;flex-direction:column;overflow:hidden;padding:10px;gap:8px;border-right:1px solid var(--border);}
+.kpi-mini{background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;}
+.kpi-mini .kl{font-size:.58rem;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.kpi-mini .kv{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--gold);}
+.ranking-wrap{background:var(--s1);border:1px solid var(--border);border-radius:7px;flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.ranking-header{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.rh-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;}
+.rh-sub{font-size:.6rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;}
+.rh-title.atacado{color:#F59E0B;}
+.rh-title.varejo{color:var(--blue);}
+.rh-title.primeira{color:var(--gold);}
+.ranking-list{flex:1;overflow-y:auto;padding:4px 0;}
+.ranking-list::-webkit-scrollbar{width:2px;}
+.ranking-list::-webkit-scrollbar-thumb{background:var(--border);}
+.rank-item{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03);}
+.rank-pos{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;flex-shrink:0;}
+.rank-pos.p1{background:rgba(245,197,66,.2);color:var(--gold);border:1px solid rgba(245,197,66,.4);}
+.rank-pos.p2{background:rgba(200,200,200,.12);color:#C0C8D8;border:1px solid rgba(200,200,200,.25);}
+.rank-pos.p3{background:rgba(180,120,60,.15);color:#CD7F32;border:1px solid rgba(180,120,60,.3);}
+.rank-pos.pn{background:var(--s2);color:var(--muted2);border:1px solid var(--border);font-size:.75rem;}
+.rank-info{min-width:0;}
+.rank-name{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-meta{font-size:.65rem;color:var(--muted2);margin-top:2px;}
+.rank-right{text-align:right;}
+.rank-val{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;color:var(--green);}
+.rank-val.qtd{color:var(--gold);font-size:1.2rem;}
+.rank-bar-wrap{grid-column:1/-1;height:3px;background:var(--border);border-radius:2px;margin-top:-6px;}
+.rank-bar{height:100%;border-radius:2px;transition:width .8s ease;}
+
+/* DIREITO - RANKING 1ª VENDA */
+.panel-right{background:var(--s1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.pr-header{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+
+footer{background:var(--s1);border-top:1px solid var(--border);display:flex;align-items:center;overflow:hidden;}
+.ft-label{padding:0 10px;font-size:.55rem;font-weight:800;color:var(--gold);letter-spacing:.15em;border-right:1px solid var(--border);height:100%;display:flex;align-items:center;white-space:nowrap;background:rgba(245,197,66,.06);}
+.ticker-outer{overflow:hidden;flex:1;}
+.ticker-inner{display:flex;animation:ticker 50s linear infinite;white-space:nowrap;}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.ti{padding:0 24px;font-size:.62rem;color:var(--muted2);font-family:'JetBrains Mono',monospace;}
+.ti strong{color:var(--green);}
+#bar{position:fixed;top:0;left:0;height:2px;background:var(--gold);transition:width .4s;z-index:999;}
+#status-msg{position:fixed;bottom:34px;left:50%;transform:translateX(-50%);background:rgba(15,17,21,.95);border:1px solid var(--border);border-radius:6px;padding:5px 14px;color:var(--muted2);font-size:.68rem;z-index:998;display:none;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div id="bar" style="width:0"></div>
+<div id="status-msg"></div>
+<div id="app">
+  <header>
+    <div class="brand-wrap">
+      <div class="brand">Calçados 24H</div>
+      <div class="slogan">Peça & Receba hoje</div>
+    </div>
+    <div class="header-mid" id="hdate"></div>
+    <div class="header-right">
+      <div class="pill-live">AO VIVO</div>
+      <div id="clock"></div>
+    </div>
+  </header>
+  <main>
+    <!-- ESQUERDO -->
+    <aside class="panel-left">
+      <div class="panel-title">
+        <span class="panel-title-txt">📦 PEDIDOS HOJE</span>
+        <button class="btn-toggle" onclick="toggleValores()" id="btn-toggle">👁 Ocultar</button>
+      </div>
+      <div class="route-cards">
+        <div class="route-card entrega"><div class="rc-label">Rota de Entrega</div><div class="rc-row"><div class="rc-num" id="r-entrega">—</div><div class="rc-val" id="rv-entrega"></div></div></div>
+        <div class="route-card loja"><div class="rc-label">Em Loja</div><div class="rc-row"><div class="rc-num" id="r-loja">—</div><div class="rc-val" id="rv-loja"></div></div></div>
+        <div class="route-card reserva"><div class="rc-label">Em Reserva</div><div class="rc-row"><div class="rc-num" id="r-reserva">—</div><div class="rc-val" id="rv-reserva"></div></div></div>
+        <div class="route-card caixa"><div class="rc-label">Frente de Caixa</div><div class="rc-row"><div class="rc-num" id="r-caixa">—</div><div class="rc-val" id="rv-caixa"></div></div></div>
+
+        <div class="route-card cancelado"><div class="rc-label">Cancelados</div><div class="rc-row"><div class="rc-num" id="r-cancelado">—</div><div class="rc-val" id="rv-cancelado"></div></div></div>
+      </div>
+      <div class="total-box">
+        <div class="tb-label">Total do Dia</div>
+        <div class="tb-num" id="total-geral">—</div>
+        <div class="tb-sub" id="total-val">pedidos</div>
+      </div>
+    </aside>
+
+    <!-- ATACADO -->
+    <div class="panel-ranking">
+      <div class="kpi-mini">
+        <div class="kl">Pedidos Hoje</div>
+        <div class="kv" id="k-hoje">—</div>
+      </div>
+      <div class="ranking-wrap">
+        <div class="ranking-header">
+          <div class="rh-title atacado">🏆 ATACADO</div>
+          <div class="rh-sub">hoje · meta R$2K</div>
+        </div>
+        <div class="ranking-list" id="ranking-atacado"><div style="text-align:center;padding:30px;color:var(--muted)">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- VAREJO -->
+    <div class="panel-ranking">
+      <div class="kpi-mini">
+        <div class="kl">Ticket Médio</div>
+        <div class="kv" id="k-ticket">—</div>
+      </div>
+      <div class="ranking-wrap">
+        <div class="ranking-header">
+          <div class="rh-title varejo">🏆 VAREJO</div>
+          <div class="rh-sub">hoje · meta R$2K</div>
+        </div>
+        <div class="ranking-list" id="ranking-varejo"><div style="text-align:center;padding:30px;color:var(--muted)">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- DIREITO: MELHOR VENDEDOR DO DIA -->
+    <aside class="panel-right">
+      <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+        <!-- ATACADO -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-bottom:1px solid var(--border);">
+          <div class="pr-header" style="padding:8px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:#F59E0B;">🏆 ATACADO — HOJE</div>
+          </div>
+          <div class="ranking-list" id="ranking-ticket-atacado"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+        </div>
+        <!-- VAREJO -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <div class="pr-header" style="padding:8px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;color:var(--blue);">🏆 VAREJO — HOJE</div>
+          </div>
+          <div class="ranking-list" id="ranking-ticket-varejo"><div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Carregando...</div></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <footer>
+    <div class="ft-label">CALÇADOS 24H</div>
+    <div class="ticker-outer"><div class="ticker-inner" id="ticker"></div></div>
+  </footer>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+let ACCESS_TOKEN    = '7af12c265841f6c557008b3629fdaf2c21fc05c0';
+let REFRESH_TOKEN   = 'fcb1fee2a7f304ba8fc0e8ce0e5cffba853aeb37';
+const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-const INITIAL_REFRESH = 'dd846335c0c8b4686f68b4dc9ae8e381999eade5';
 
-function fetchUrl(urlStr, options) {
-  return new Promise(function(resolve, reject) {
-    var mod = urlStr.startsWith('https') ? https : http;
-    var urlObj = new URL(urlStr);
-    var req = mod.request({
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
-      method: options.method || 'GET',
-      headers: options.headers || {}
-    }, function(res) {
-      var data = '';
-      res.on('data', function(chunk) { data += chunk; });
-      res.on('end', function() { resolve(data); });
-    });
-    req.on('error', reject);
-    if (options.body) req.write(options.body);
-    req.end();
+const VENDEDORES = {
+  15596884435:{nome:'Carla',tipo:'atacado'},
+  18337827154:{nome:'Eduarda',tipo:'atacado'},
+  15596884242:{nome:'Laura',tipo:'atacado'},
+  15596375893:{nome:'Ana Karine',tipo:'atacado'},
+  10619057007:{nome:'Lucas',tipo:'varejo'},
+  15596933252:{nome:'Ana Karollyne',tipo:'varejo'},
+  15596868930:{nome:'Dorathy',tipo:'varejo'},
+  15596730913:{nome:'Emilli',tipo:'varejo'},
+  8150695375: {nome:'Karol',tipo:'varejo'},
+  15596884243:{nome:'Jessica',tipo:'varejo'},
+  15596884245:{nome:'Larissa',tipo:'varejo'},
+};
+
+const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
+const sleep= ms => new Promise(r=>setTimeout(r,ms));
+let valoresOcultos = false;
+
+// ── CLOCK ─────────────────────────────────────────────────────────
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('hdate').textContent=n.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+}
+setInterval(updateClock,1000);updateClock();
+
+function setBar(p){document.getElementById('bar').style.width=p+'%';if(p>=100)setTimeout(()=>document.getElementById('bar').style.width='0',600);}
+function setStatus(m){const e=document.getElementById('status-msg');e.textContent=m;e.style.display=m?'block':'none';}
+
+// ── OCULTAR/MOSTRAR VALORES ───────────────────────────────────────
+function toggleValores(){
+  valoresOcultos=!valoresOcultos;
+  document.querySelectorAll('.rc-val,.tb-sub').forEach(el=>{
+    el.classList.toggle('hidden',valoresOcultos);
   });
+  document.getElementById('btn-toggle').textContent=valoresOcultos?'👁 Mostrar':'👁 Ocultar';
 }
 
-async function kvGet(key) {
-  var url = process.env.BLING_KV_REST_API_URL;
-  var token = process.env.BLING_KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  try {
-    var res = await fetchUrl(url + '/get/' + key, {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    var data = JSON.parse(res);
-    return data.result || null;
-  } catch(e) { return null; }
-}
-
-async function kvSet(key, value, exSeconds) {
-  var url = process.env.BLING_KV_REST_API_URL;
-  var token = process.env.BLING_KV_REST_API_TOKEN;
-  if (!url || !token) return;
-  try {
-    var path = '/set/' + key + '/' + encodeURIComponent(value);
-    if (exSeconds) path += '?ex=' + exSeconds;
-    await fetchUrl(url + path, {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-  } catch(e) { console.error('KV set error:', e.message); }
-}
-
-var accessToken = '';
-var refreshToken = '';
-var tokenExpiry = 0;
-
-async function renewToken() {
-  var rt = refreshToken || await kvGet('bling_refresh_token') || INITIAL_REFRESH;
-  var creds = Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64');
-  var body = 'grant_type=refresh_token&refresh_token=' + rt;
-
-  return new Promise(function(resolve, reject) {
-    var req = https.request({
-      hostname: 'www.bling.com.br',
-      path: '/Api/v3/oauth/token',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + creds,
-        'Content-Length': Buffer.byteLength(body)
-      }
-    }, function(res) {
-      var data = '';
-      res.on('data', function(chunk) { data += chunk; });
-      res.on('end', async function() {
-        try {
-          var json = JSON.parse(data);
-          if (json.access_token) {
-            accessToken = json.access_token;
-            refreshToken = json.refresh_token || rt;
-            tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-            await kvSet('bling_access_token', accessToken, 19800);
-            await kvSet('bling_refresh_token', refreshToken);
-            console.log('Token renovado e salvo no KV!');
-            resolve(accessToken);
-          } else {
-            console.error('Erro renovar:', JSON.stringify(json));
-            reject(json);
-          }
-        } catch(e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
+let valoresMesOcultos=false;
+function toggleValoresMes(){
+  valoresMesOcultos=!valoresMesOcultos;
+  document.querySelectorAll('.rank-val-mes').forEach(el=>{
+    el.style.opacity=valoresMesOcultos?'0':'1';
   });
+  document.getElementById('btn-toggle-mes').textContent=valoresMesOcultos?'👁 Mostrar':'👁 Ocultar';
 }
 
-async function getToken() {
-  if (!accessToken || Date.now() > tokenExpiry - (30 * 60 * 1000)) {
-    var saved = await kvGet('bling_access_token');
-    if (saved) {
-      accessToken = saved;
-      tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-      console.log('Token recuperado do KV!');
+// ── TOKEN ─────────────────────────────────────────────────────────
+async function refreshTokenFn(){
+  try{
+    setStatus('Renovando token...');
+    const r=await fetch('https://dashboard-wr1x.onrender.com/token');
+    const d=await r.json();
+    if(d.access_token){
+      ACCESS_TOKEN=d.access_token;
+      setStatus('✅ Token renovado!');
+      setTimeout(()=>setStatus(''),2000);
+      return true;
+    }
+    return false;
+  }catch(e){
+    setStatus('Erro ao renovar token');
+    return false;
+  }
+}
+
+async function blingGet(path){
+  const cleanPath=path.startsWith('/')?path.slice(1):path;
+  // Separa o endpoint dos query params
+  const [endpoint, queryStr]=cleanPath.split('?');
+  let proxyUrl='/api/bling?path='+encodeURIComponent(endpoint);
+  if(queryStr) proxyUrl+='&'+queryStr;
+  let r=await fetch(proxyUrl,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
+  if(r.status===401){
+    const ok=await refreshTokenFn();
+    if(ok) r=await fetch(proxyUrl,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'Accept':'application/json'}});
+  }
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+const getValor = p => Number(p?.totalProdutos||p?.total||0);
+const getNome  = p => String(p?.contato?.nome||p?.cliente?.nome||'Cliente');
+const getSitId = p => Number(p?.situacao?.id??0);
+const soma     = arr => arr.reduce((s,p)=>s+getValor(p),0);
+
+const isEntrega  = p => getSitId(p)===415750||getSitId(p)===12;
+const isAtendido = p => getSitId(p)===9;
+const isReserva  = p => getSitId(p)===15;
+const isCancelado= p => getSitId(p)===11;
+const isCaixa    = p => p?.loja?.id===203331656||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('24')||String(p?.loja?.descricao||p?.loja?.nome||'').toLowerCase().includes('caixa');
+
+// ── RENDER RANKING VENDAS ─────────────────────────────────────────
+// Metas por tipo
+const METAS_VAREJO=[
+  {min:30000,emoji:'💎',label:'Diamante',cor:'#00E5FF',comissao:'4%'},
+  {min:21000,emoji:'🏅',label:'Ouro',cor:'var(--gold)',comissao:'3%'},
+  {min:15000,emoji:'🥈',label:'Prata',cor:'#C0C8D8',comissao:'2%'},
+];
+const METAS_ATACADO=[
+  {min:60000,emoji:'💎',label:'Diamante',cor:'#00E5FF'},
+  {min:50000,emoji:'🥇',label:'Ouro',cor:'var(--gold)'},
+  {min:45000,emoji:'🥈',label:'Prata',cor:'#C0C8D8'},
+  {min:35000,emoji:'🥉',label:'Bronze',cor:'#CD7F32'},
+];
+
+function getMeta(total,tipo){
+  const metas=tipo==='varejo'?METAS_VAREJO:METAS_ATACADO;
+  for(const m of metas){ if(total>=m.min) return m; }
+  return null;
+}
+
+function renderRankingTicket(elId, dados, tipo){
+  // Ordena por quantidade de atendimentos (maior primeiro)
+  const filtrados=dados.filter(v=>v.tipo===tipo&&v.qtd>0).sort((a,b)=>b.qtd-a.qtd);
+  if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Nenhum dado</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById(elId).innerHTML=filtrados.map((v,i)=>{
+    const ticket=fmt(v.total/v.qtd);
+    const medal=i<3?medals[i]:(i+1);
+    return `<div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px;">
+      <div style="font-size:${i<3?'1.2rem':'.8rem'};flex-shrink:0;min-width:24px;text-align:center;color:var(--muted2);">${medal}</div>
+      <div style="flex:1;">
+        <div style="font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:2px;">${v.nome}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;color:var(--blue)">${v.qtd} <span style="font-size:.65rem;font-weight:400;color:var(--muted2)">atendimentos</span></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted2)">ticket ${ticket}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const META_VAREJO = 2000;
+const META_ATACADO = 2000;
+
+function renderRanking(elId, dados, tipo){
+  const filtrados=dados.filter(v=>v.tipo===tipo);
+  if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Nenhum dado</div>';return;}
+  const maxVal=Math.max(filtrados[0].total, tipo==='varejo'?META_VAREJO:META_ATACADO);
+  const medals=['🥇','🥈','🥉'];
+  const pCls=['p1','p2','p3'];
+  const barClrA=['var(--gold)','#C0C8D8','#CD7F32','var(--orange)'];
+  const barClrV=['var(--blue)','var(--green)','var(--purple)','var(--orange)','#C0C8D8','#CD7F32','var(--gold)'];
+  const barClr=tipo==='atacado'?barClrA:barClrV;
+  document.getElementById(elId).innerHTML=filtrados.map((v,i)=>{
+    const pct=Math.min(Math.round((v.total/(tipo==='varejo'?META_VAREJO:META_ATACADO))*100),100);
+    const meta=tipo==='varejo'?META_VAREJO:META_ATACADO;
+      const bateu=v.total>=meta;
+    return `<div class="rank-item" style="${bateu?'background:rgba(245,197,66,.04)':''}">
+      <div class="rank-pos ${pCls[i]||'pn'}">${i<3?medals[i]:i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${v.nome}${bateu?' <span style="font-size:.65rem;color:var(--gold)">✨2K</span>':''}</div>
+        <div class="rank-meta">${v.qtd} pedido(s) · ${pct}% da meta</div>
+      </div>
+      <div class="rank-right"><div class="rank-val">${fmt(v.total)}</div></div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:${bateu?'var(--gold)':barClr[i]||'var(--blue)'};${bateu?'box-shadow:0 0 6px var(--gold)':''}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+
+
+// ── LOAD ──────────────────────────────────────────────────────────
+
+function renderRankingPeriodo(elId, dados, tipo){
+  const filtrados=dados.filter(function(v){return v.tipo===tipo&&v.total>0;}).sort(function(a,b){return b.total-a.total;});
+  if(!filtrados.length){document.getElementById(elId).innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.75rem">Nenhum dado</div>';return;}
+  const maxVal=filtrados[0].total||1;
+  const medals=['🥇','🥈','🥉'];
+  const pCls=['p1','p2','p3'];
+  document.getElementById(elId).innerHTML=filtrados.map(function(v,i){
+    const pct=Math.round((v.total/maxVal)*100);
+    const ticket=v.qtd?fmt(v.total/v.qtd):'—';
+    return '<div class="rank-item">'+
+      '<div class="rank-pos '+(pCls[i]||'pn')+'">'+(i<3?medals[i]:i+1)+'</div>'+
+      '<div class="rank-info"><div class="rank-name">'+v.nome+'</div><div class="rank-meta">'+v.qtd+' ped · ticket '+ticket+'</div></div>'+
+      '<div class="rank-right"><div class="rank-val">'+fmt(v.total)+'</div></div>'+
+      '<div class="rank-bar-wrap"><div class="rank-bar" style="width:'+pct+'%;background:var(--gold)"></div></div>'+
+    '</div>';
+  }).join('');
+}
+
+async function loadAll(){
+  setBar(5);
+  setStatus('Carregando pedidos...');
+  try{
+    const hoje=new Date().toISOString().split('T')[0];
+
+    // Lista pedidos de hoje
+    let lista=[],page=1,done=false;
+    while(!done){
+      const d=await blingGet('/pedidos/vendas?pagina='+page+'&limite=100&dataInicial='+hoje+'&dataFinal='+hoje);
+      const items=d?.data||[];
+      lista=lista.concat(items);
+      done=items.length<100||page>=5;
+      page++;
+    }
+    setBar(18);
+
+    const listaAtiva=lista.filter(p=>!isCancelado(p));
+    const listaCancelada=lista.filter(isCancelado);
+
+    // Contagens imediatas
+    const setRC=(id,arr,somaArr)=>{
+      document.getElementById('r-'+id).textContent=arr.length;
+      document.getElementById('rv-'+id).textContent=fmt(somaArr!==undefined?somaArr:soma(arr));
+      if(valoresOcultos) document.getElementById('rv-'+id).classList.add('hidden');
+    };
+    setRC('entrega',listaAtiva.filter(isEntrega));
+    setRC('loja',listaAtiva.filter(isAtendido));
+    setRC('reserva',listaAtiva.filter(isReserva));
+    setRC('cancelado',listaCancelada);
+    document.getElementById('total-geral').textContent=listaAtiva.length;
+    document.getElementById('total-val').textContent=fmt(soma(listaAtiva))+' total';
+    if(valoresOcultos) document.getElementById('total-val').classList.add('hidden');
+    document.getElementById('k-hoje').textContent=listaAtiva.length;
+    document.getElementById('k-ticket').textContent=fmt(listaAtiva.length?soma(listaAtiva)/listaAtiva.length:0);
+
+    // 1ª Venda — será calculada depois dos detalhados
+    setBar(30);
+
+    // Detalhes para vendedor e loja
+    setStatus('Buscando detalhes...');
+    const LIMITE=listaAtiva.length;
+    const detalhados=[];
+    for(let i=0;i<LIMITE;i++){
+      try{
+        await sleep(400);
+        const d=await blingGet('/pedidos/vendas/'+listaAtiva[i].id);
+        if(d?.data) detalhados.push(d.data);
+        else detalhados.push(listaAtiva[i]);
+      }catch(e){detalhados.push(listaAtiva[i]);}
+      setBar(30+Math.round((i/LIMITE)*55));
+      if(i%5===0) setStatus(`Detalhes: ${i+1}/${LIMITE}`);
+    }
+    setBar(87);
+
+    // Frente de caixa com detalhes
+    const grpCaixa=detalhados.filter(isCaixa);
+    setRC('caixa',grpCaixa);
+
+
+
+    // Ranking vendas
+    const vendMap={};
+    detalhados.forEach(p=>{
+      if(getSitId(p)===11) return; // ignora cancelados
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId])return;
+      const {nome,tipo}=VENDEDORES[vId];
+      if(!vendMap[nome])vendMap[nome]={nome,tipo,total:0,qtd:0};
+      vendMap[nome].total+=getValor(p);
+      vendMap[nome].qtd++;
+    });
+    const ranking=Object.values(vendMap).sort((a,b)=>b.total-a.total);
+    renderRanking('ranking-atacado',ranking,'atacado');
+    renderRanking('ranking-varejo',ranking,'varejo');
+
+
+
+    // Ticker
+    const tItems=listaAtiva.slice(0,15).map(p=>`<span class="ti">📦 #${p.numero} <strong>${getNome(p)}</strong> · ${fmt(getValor(p))}</span>`).join('');
+    document.getElementById('ticker').innerHTML=tItems+tItems;
+
+    // ── RANKING MENSAL E QUINZENAL ──
+    setStatus('Carregando ranking do mês...');
+    const agora=new Date();
+    const dia=agora.getDate();
+    const mesIni=hoje.substring(0,7)+'-01';
+    const mesStr=hoje.substring(0,7);
+    const ultimoDia=new Date(agora.getFullYear(),agora.getMonth()+1,0).getDate();
+    const mesFim=hoje.substring(0,7)+'-'+String(ultimoDia).padStart(2,'0');
+
+    // Quinzena
+    let quinzIni,quinzFim;
+    if(dia<=15){
+      quinzIni=hoje.substring(0,7)+'-01';
+      quinzFim=hoje.substring(0,7)+'-15';
     } else {
-      await renewToken();
+      quinzIni=hoje.substring(0,7)+'-16';
+      quinzFim=mesFim;
     }
+
+    // Busca pedidos do mês para atacado
+    let pedidosMes=[],pmPage=1,pmDone=false;
+    while(!pmDone){
+      const pmd=await blingGet('/pedidos/vendas?pagina='+pmPage+'&limite=100&dataInicial='+mesIni+'&dataFinal='+hoje);
+      const pmi=pmd?.data||[];
+      pedidosMes=pedidosMes.concat(pmi);
+      pmDone=pmi.length<100||pmPage>=10;
+      pmPage++;
+    }
+
+    // Busca detalhes do mês (limitado a 50 para não travar)
+    const detalhadosMes=[];
+    const amostaMes=pedidosMes.slice(0,50);
+    for(let i=0;i<amostaMes.length;i++){
+      try{
+        await sleep(400);
+        const d=await blingGet('/pedidos/vendas/'+amostaMes[i].id);
+        if(d?.data) detalhadosMes.push(d.data);
+      }catch(e){detalhadosMes.push(amostaMes[i]);}
+    }
+
+    // Ranking mensal atacado
+    const vendMapMes={};
+    detalhadosMes.forEach(p=>{
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId]) return;
+      const {nome,tipo}=VENDEDORES[vId];
+      if(!vendMapMes[nome])vendMapMes[nome]={nome,tipo,total:0,qtd:0};
+      vendMapMes[nome].total+=getValor(p);
+      vendMapMes[nome].qtd++;
+    });
+    const rankingMes=Object.values(vendMapMes).sort((a,b)=>b.total-a.total);
+
+    // Busca pedidos da quinzena para varejo
+    let pedidosQ=[],pqPage=1,pqDone=false;
+    while(!pqDone){
+      const pqd=await blingGet('/pedidos/vendas?pagina='+pqPage+'&limite=100&dataInicial='+quinzIni+'&dataFinal='+hoje);
+      const pqi=pqd?.data||[];
+      pedidosQ=pedidosQ.concat(pqi);
+      pqDone=pqi.length<100||pqPage>=10;
+      pqPage++;
+    }
+
+    const detalhadosQ=[];
+    const amostraQ=pedidosQ.slice(0,50);
+    for(let i=0;i<amostraQ.length;i++){
+      try{
+        await sleep(400);
+        const d=await blingGet('/pedidos/vendas/'+amostraQ[i].id);
+        if(d?.data) detalhadosQ.push(d.data);
+      }catch(e){detalhadosQ.push(amostraQ[i]);}
+    }
+
+    const vendMapQ={};
+    detalhadosQ.forEach(p=>{
+      const vId=p?.vendedor?.id;
+      if(!vId||!VENDEDORES[vId]) return;
+      const {nome,tipo}=VENDEDORES[vId];
+      if(tipo!=='varejo') return;
+      if(!vendMapQ[nome])vendMapQ[nome]={nome,tipo,total:0,qtd:0};
+      vendMapQ[nome].total+=getValor(p);
+      vendMapQ[nome].qtd++;
+    });
+    const rankingQ=Object.values(vendMapQ).sort((a,b)=>b.total-a.total);
+
+    renderRankingTicket('ranking-ticket-atacado',ranking,'atacado');
+    renderRankingTicket('ranking-ticket-varejo',ranking,'varejo');
+
+    setBar(100);
+    setStatus('');
+  }catch(e){
+    setBar(0);
+    setStatus('Erro: '+e.message);
+    console.error(e);
   }
-  return accessToken;
 }
 
-setInterval(function() { renewToken().catch(console.error); }, 5 * 60 * 60 * 1000);
-
-getToken().then(function(t) {
-  console.log('Token inicial OK:', t.substring(0, 10) + '...');
-}).catch(console.error);
-
-var server = http.createServer(async function(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
-
-  if (req.url === '/token') {
-    try {
-      var token = await getToken();
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ access_token: token }));
-    } catch(e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: String(e) }));
-    }
-    return;
-  }
-
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ status: 'ok' }));
-});
-
-var PORT = process.env.PORT || 3000;
-server.listen(PORT, function() { console.log('Server running on port ' + PORT); });
+// Busca token automaticamente ao iniciar
+async function init(){
+  setStatus('Conectando ao servidor...');
+  await refreshTokenFn();
+  await loadAll();
+  setInterval(loadAll,300000);
+  setInterval(refreshTokenFn,5*60*60*1000);
+}
+init();
+</script>
+</body>
+</html>
