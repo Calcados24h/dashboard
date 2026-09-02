@@ -3,7 +3,7 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-const INITIAL_REFRESH = '837f052aa0f83748666d3434a01d3325ab713052';
+const INITIAL_REFRESH = 'fc216d230dfa283bb9f04bacf3b6be7c0360ccfc';
 
 function fetchUrl(urlStr, options) {
   return new Promise(function(resolve, reject) {
