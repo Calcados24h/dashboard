@@ -3,7 +3,7 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-const INITIAL_REFRESH = 'fc216d230dfa283bb9f04bacf3b6be7c0360ccfc';
+const INITIAL_REFRESH = 'd7cc713c5278dada237b3fe9c4d266037cbc9d8a';
 
 function fetchUrl(urlStr, options) {
   return new Promise(function(resolve, reject) {
@@ -113,9 +113,13 @@ async function getToken() {
 
 setInterval(function() { renewToken().catch(console.error); }, 5 * 60 * 60 * 1000);
 
-getToken().then(function(t) {
-  console.log('Token inicial OK:', t.substring(0, 10) + '...');
-}).catch(console.error);
+// Força renovação limpando o KV ao iniciar
+async function iniciar() {
+  await kvSet('bling_access_token', '', 1); // limpa token salvo
+  await renewToken();
+  console.log('Token inicial renovado!');
+}
+iniciar().catch(console.error);
 
 var server = http.createServer(async function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
