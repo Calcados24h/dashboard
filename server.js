@@ -3,8 +3,8 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-var REFRESH_TOKEN = 'dc93de001b662dc618b0d69c56e2606bdc7aaca5';
-var accessToken = '29fb16b537ed321ff15296a7f3ae137d2484963f';
+var REFRESH_TOKEN = 'dbc9810c78761515c9395d5b580a1b77ad6009e6';
+var accessToken = 'dddfb42990687bf93a291648f42228f6c31de4dc';
 var tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
 
 function renewToken() {
@@ -30,7 +30,7 @@ function renewToken() {
             accessToken = json.access_token;
             if (json.refresh_token) REFRESH_TOKEN = json.refresh_token;
             tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-            console.log('Token renovado!');
+            console.log('Token renovado com sucesso!');
             resolve(accessToken);
           } else {
             console.error('Erro:', JSON.stringify(json));
@@ -53,7 +53,6 @@ async function getToken() {
 }
 
 setInterval(function() { renewToken().catch(console.error); }, 5 * 60 * 60 * 1000);
-console.log('Server iniciado com token valido!');
 
 var server = http.createServer(async function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
