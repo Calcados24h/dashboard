@@ -4,15 +4,13 @@ const http = require('http');
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
 var REFRESH_TOKEN = 'dc93de001b662dc618b0d69c56e2606bdc7aaca5';
-
-var accessToken = '';
-var tokenExpiry = 0;
+var accessToken = '29fb16b537ed321ff15296a7f3ae137d2484963f';
+var tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
 
 function renewToken() {
   return new Promise(function(resolve, reject) {
     var creds = Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64');
     var body = 'grant_type=refresh_token&refresh_token=' + REFRESH_TOKEN;
-
     var req = https.request({
       hostname: 'www.bling.com.br',
       path: '/Api/v3/oauth/token',
@@ -32,10 +30,10 @@ function renewToken() {
             accessToken = json.access_token;
             if (json.refresh_token) REFRESH_TOKEN = json.refresh_token;
             tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-            console.log('Token renovado com sucesso!');
+            console.log('Token renovado!');
             resolve(accessToken);
           } else {
-            console.error('Erro ao renovar:', JSON.stringify(json));
+            console.error('Erro:', JSON.stringify(json));
             reject(json);
           }
         } catch(e) { reject(e); }
@@ -48,17 +46,14 @@ function renewToken() {
 }
 
 async function getToken() {
-  if (!accessToken || Date.now() > tokenExpiry - (30 * 60 * 1000)) {
+  if (Date.now() > tokenExpiry - (30 * 60 * 1000)) {
     await renewToken();
   }
   return accessToken;
 }
 
 setInterval(function() { renewToken().catch(console.error); }, 5 * 60 * 60 * 1000);
-
-renewToken().then(function() {
-  console.log('Token inicial OK!');
-}).catch(console.error);
+console.log('Server iniciado com token valido!');
 
 var server = http.createServer(async function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
