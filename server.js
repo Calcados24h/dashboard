@@ -12,7 +12,7 @@ function renewToken() {
     var creds = Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64');
     var body = 'grant_type=refresh_token&refresh_token=' + REFRESH_TOKEN;
     var req = https.request({
-      hostname: 'www.bling.com.br',
+      hostname: 'api.bling.com.br',
       path: '/Api/v3/oauth/token',
       method: 'POST',
       headers: {
