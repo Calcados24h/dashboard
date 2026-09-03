@@ -3,8 +3,8 @@ const http = require('http');
 
 const CLIENT_ID = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
-var REFRESH_TOKEN = 'dbc9810c78761515c9395d5b580a1b77ad6009e6';
-var accessToken = 'dddfb42990687bf93a291648f42228f6c31de4dc';
+var REFRESH_TOKEN = '6e27d619c1c49e4c85c9c927704ec8d5e1075c62';
+var accessToken = '2aeee65f306831637dace6e8e25fc5c85e3c84a2';
 var tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
 
 function renewToken() {
@@ -30,7 +30,7 @@ function renewToken() {
             accessToken = json.access_token;
             if (json.refresh_token) REFRESH_TOKEN = json.refresh_token;
             tokenExpiry = Date.now() + (5 * 60 * 60 * 1000);
-            console.log('Token renovado com sucesso!');
+            console.log('Token renovado!');
             resolve(accessToken);
           } else {
             console.error('Erro:', JSON.stringify(json));
