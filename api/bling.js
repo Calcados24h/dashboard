@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
     
     // Reconstrói query string com params adicionais
     const qs = new URLSearchParams(params).toString();
-    const url = 'https://www.bling.com.br/Api/v3/' + endpoint + (qs ? '?' + qs : '');
+    const url = 'https://api.bling.com.br/Api/v3/' + endpoint + (qs ? '?' + qs : '');
 
     const headers = { 'Authorization': token, 'Accept': 'application/json' };
     
