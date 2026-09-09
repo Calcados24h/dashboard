@@ -203,13 +203,13 @@ const VENDEDORES = {
   15596884435:{nome:'Carla',tipo:'atacado'},
   18337827154:{nome:'Eduarda',tipo:'atacado'},
   15596967830:{nome:'Renato',tipo:'atacado'},
-  17752233308:{nome:'Jardel',tipo:'atacado'},
+  15596717991:{nome:'Jardel',tipo:'atacado'},
   15596884242:{nome:'Laura',tipo:'atacado'},
   15596375893:{nome:'Ana Karine',tipo:'atacado'},
   10619057007:{nome:'Lucas',tipo:'varejo'},
   15596933252:{nome:'Ana Karollyne',tipo:'varejo'},
-  18354728905:{nome:'Amanda',tipo:'varejo'},
-  1559658839:{nome:'Wandson',tipo:'varejo'},
+  15596968587:{nome:'Amanda',tipo:'varejo'},
+  15596558839:{nome:'Wandson',tipo:'varejo'},
   15596868930:{nome:'Dorathy',tipo:'varejo'},
   15596730913:{nome:'Emilli',tipo:'varejo'},
   15596884243:{nome:'Jessica',tipo:'varejo'},
@@ -430,7 +430,7 @@ async function loadAll(){
     const detalhados=[];
     for(let i=0;i<LIMITE;i++){
       try{
-        await sleep(400);
+        await sleep(800);
         const d=await blingGet('/pedidos/vendas/'+listaAtiva[i].id);
         if(d?.data) detalhados.push(d.data);
         else detalhados.push(listaAtiva[i]);
@@ -501,7 +501,7 @@ async function loadAll(){
     const amostaMes=pedidosMes.slice(0,50);
     for(let i=0;i<amostaMes.length;i++){
       try{
-        await sleep(400);
+        await sleep(800);
         const d=await blingGet('/pedidos/vendas/'+amostaMes[i].id);
         if(d?.data) detalhadosMes.push(d.data);
       }catch(e){detalhadosMes.push(amostaMes[i]);}
@@ -533,7 +533,7 @@ async function loadAll(){
     const amostraQ=pedidosQ.slice(0,50);
     for(let i=0;i<amostraQ.length;i++){
       try{
-        await sleep(400);
+        await sleep(800);
         const d=await blingGet('/pedidos/vendas/'+amostraQ[i].id);
         if(d?.data) detalhadosQ.push(d.data);
       }catch(e){detalhadosQ.push(amostraQ[i]);}
