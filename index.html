@@ -456,7 +456,7 @@ async function loadAll(){
     const vendMap={};
     detalhados.forEach(p=>{
       if(getSitId(p)===11) return; // ignora cancelados
-      const vId=p?.vendedor?.id;
+      const vId=String(p?.vendedor?.id);
       if(!vId||!VENDEDORES[vId])return;
       const {nome,tipo}=VENDEDORES[vId];
       if(!vendMap[nome])vendMap[nome]={nome,tipo,total:0,qtd:0};
