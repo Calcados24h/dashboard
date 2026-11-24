@@ -194,8 +194,8 @@ footer{background:var(--s1);border-top:1px solid var(--border);display:flex;alig
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────
-let ACCESS_TOKEN    = '7af12c265841f6c557008b3629fdaf2c21fc05c0';
-let REFRESH_TOKEN   = 'fcb1fee2a7f304ba8fc0e8ce0e5cffba853aeb37';
+let ACCESS_TOKEN    = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpZCI6ImJmNTIwZjM3OTRjYTc3NjVlOWY3MTAxNDVjZTdmYmUzMTMzZmY4NzMiLCJqdGkiOiJiZjUyMGYzNzk0Y2E3NzY1ZTlmNzEwMTQ1Y2U3ZmJlMzEzM2ZmODczIiwiaXNzIjpudWxsLCJhdWQiOiIzMWRkOGNlN2JiYzZmODEzNTdmNzdiZDcwOGQ1NWQwNjZkNWE4ZTllIiwic3ViIjoiNTg4NTE4MDQ4OCIsImV4cCI6MTc5NTU0Njg3OCwiaWF0IjoxNzk1NTI1Mjc4LCJ0b2tlbl90eXBlIjoiYmVhcmVyIiwic2NvcGUiOm51bGwsInBlcm0iOiIwYSIsImdyYW50VHlwZXMiOiJhdXRob3JpemF0aW9uX2NvZGUgcmVmcmVzaF90b2tlbiIsImFwcF9pZCI6IjM0Mjc4MCIsImNvbXBhbnlfaWQiOjU4ODUxODA0ODcsInJvbGUiOiJhZG0iLCJwbGFuX25hbWUiOiJQbGFub1RpdGFuaW9UaWVyMiIsImFwcHJvdmVkIjpmYWxzZX0.lMFRrVil9JpT2TVahqn4WZIm_xQQ-O3pT3gpByzoE0rZIqiEFpAeIPKwUnwvqJjYQ6LdHvnghfMkjiUKZJX_WGQxynkW_kbJDDm2ER5eBkXxto8NgYjr88IfbibnziOq_Ljl6wVn2guuCM2cLL59_h-tuUGJDtQarsXiF4rX_z1x3Sp4K6R7yPQPlZ1FbWHgndc3uKZPE384qGFqM20DToH3GZL44-L_xigMOvU2l5NqqWaUDN2-wnlp1ATgPPscwtKDBd_rswr3y7za_zTsTgeI1xsEveSvikKliFAojzaAsZ61VfQSBEtl_TeibqeQhyl2PhdYOBB1gacN8aeadw';
+let REFRESH_TOKEN   = 'd491254b481295bbf096a8a413f61c823a23ceec';
 const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
 
@@ -204,6 +204,7 @@ const VENDEDORES = {
   15596717991:{nome:'Jardel',tipo:'atacado'},
   15596375893:{nome:'Ana Karine',tipo:'atacado'},
   15596984953:{nome:'Raquel',tipo:'atacado'},
+  18527574538:{nome:'Talison',tipo:'atacado'},
   10619057007:{nome:'Lucas',tipo:'varejo'},
   15596933252:{nome:'Ana Karollyne',tipo:'varejo'},
   15596868930:{nome:'Dorathy',tipo:'varejo'},
@@ -212,7 +213,6 @@ const VENDEDORES = {
   15596884245:{nome:'Larissa',tipo:'varejo'},
   18510529769:{nome:'Gisele',tipo:'varejo'},
   18526773049:{nome:'Daianna',tipo:'varejo'},
-  18527574538:{nome:'Talison',tipo:'atacado'},
 };
 
 const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
