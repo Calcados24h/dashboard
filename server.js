@@ -17,15 +17,15 @@ var VENDEDORES_DEFAULT = {
   '15596717991': {nome: 'Jardel', tipo: 'atacado'},
   '15596375893': {nome: 'Ana Karine', tipo: 'atacado'},
   '15596984953': {nome: 'Raquel', tipo: 'atacado'},
-  '18527574538': {nome: 'Talison', tipo: 'atacado'},
+  '15596999989': {nome: 'Talison', tipo: 'atacado'},
   '10619057007': {nome: 'Lucas', tipo: 'varejo'},
   '15596933252': {nome: 'Ana Karollyne', tipo: 'varejo'},
   '15596868930': {nome: 'Dorathy', tipo: 'varejo'},
   '15596730913': {nome: 'Emilli', tipo: 'varejo'},
   '15596884243': {nome: 'Jessica', tipo: 'varejo'},
   '15596884245': {nome: 'Larissa', tipo: 'varejo'},
-  '18510529769': {nome: 'Gisele', tipo: 'varejo'},
-  '18526773049': {nome: 'Daianna', tipo: 'varejo'}
+  '15597002319': {nome: 'Gisele', tipo: 'varejo'},
+  '15596999818': {nome: 'Daianna', tipo: 'varejo'}
 };
 
 function carregarVendedores() {
