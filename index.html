@@ -214,7 +214,13 @@ let VENDEDORES = {
   18510529769:{nome:'Gisele',tipo:'varejo'},
   18526773049:{nome:'Daianna',tipo:'varejo'},
 };
-fetch('https://dashboard-wr1x.onrender.com/vendedores').then(r=>r.json()).then(data=>{VENDEDORES=data;}).catch(()=>{});
+async function carregarVendedores(){
+  try{
+    const r=await fetch('https://dashboard-wr1x.onrender.com/vendedores');
+    const data=await r.json();
+    if(data&&Object.keys(data).length>0) VENDEDORES=data;
+  }catch(e){}
+}
 
 const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
 const sleep= ms => new Promise(r=>setTimeout(r,ms));
@@ -482,6 +488,7 @@ async function loadAll(){
 // Busca token automaticamente ao iniciar
 async function init(){
   setStatus('Conectando ao servidor...');
+  await carregarVendedores();
   await refreshTokenFn();
   await loadAll();
   setInterval(loadAll,300000);
