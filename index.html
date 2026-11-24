@@ -199,7 +199,7 @@ let REFRESH_TOKEN   = 'd491254b481295bbf096a8a413f61c823a23ceec';
 const CLIENT_ID     = '31dd8ce7bbc6f81357f77bd708d55d066d5a8e9e';
 const CLIENT_SECRET = '7082a944fa4a4e5776e0cee250bc9ae1fdbf229e62d09e0568774278efcb';
 
-const VENDEDORES = {
+let VENDEDORES = {
   15596884435:{nome:'Carla',tipo:'atacado'},
   15596717991:{nome:'Jardel',tipo:'atacado'},
   15596375893:{nome:'Ana Karine',tipo:'atacado'},
@@ -214,6 +214,7 @@ const VENDEDORES = {
   18510529769:{nome:'Gisele',tipo:'varejo'},
   18526773049:{nome:'Daianna',tipo:'varejo'},
 };
+fetch('https://dashboard-wr1x.onrender.com/vendedores').then(r=>r.json()).then(data=>{VENDEDORES=data;}).catch(()=>{});
 
 const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
 const sleep= ms => new Promise(r=>setTimeout(r,ms));
