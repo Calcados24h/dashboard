@@ -427,23 +427,9 @@ async function loadAll(){
     document.getElementById('k-hoje').textContent=listaAtiva.length;
     document.getElementById('k-ticket').textContent=fmt(listaAtiva.length?soma(listaAtiva)/listaAtiva.length:0);
 
-    // 1ª Venda — será calculada depois dos detalhados
-    setBar(30);
-
-    // Detalhes para vendedor e loja
-    setStatus('Buscando detalhes...');
-    const LIMITE=listaAtiva.length;
-    const detalhados=[];
-    for(let i=0;i<LIMITE;i++){
-      try{
-        await sleep(1200);
-        const d=await blingGet('/pedidos/vendas/'+listaAtiva[i].id);
-        if(d?.data) detalhados.push(d.data);
-        else detalhados.push(listaAtiva[i]);
-      }catch(e){detalhados.push(listaAtiva[i]);}
-      setBar(30+Math.round((i/LIMITE)*55));
-      if(i%5===0) setStatus(`Detalhes: ${i+1}/${LIMITE}`);
-    }
+    // Processa pedidos
+    setStatus('Processando...');
+    const detalhados=listaAtiva;
     setBar(87);
 
     // Frente de caixa com detalhes
