@@ -436,7 +436,7 @@ async function loadAll(){
     const detalhados=[];
     for(let i=0;i<LIMITE;i++){
       try{
-        await sleep(800);
+        await sleep(1200);
         const d=await blingGet('/pedidos/vendas/'+listaAtiva[i].id);
         if(d?.data) detalhados.push(d.data);
         else detalhados.push(listaAtiva[i]);
