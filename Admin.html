@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin — Vendedores</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#07080A;color:#F0F2F5;font-family:'Inter',Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 16px;}
+h1{font-size:1.3rem;font-weight:700;color:#F5C542;margin-bottom:6px;}
+p{font-size:.8rem;color:#8A95A5;margin-bottom:24px;}
+.card{background:#0F1115;border:1px solid #1E2229;border-radius:10px;padding:20px;width:100%;max-width:480px;margin-bottom:20px;}
+.card h2{font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#5A6070;margin-bottom:14px;}
+label{display:block;font-size:.75rem;color:#8A95A5;margin-bottom:4px;margin-top:10px;}
+input,select{width:100%;padding:9px 12px;background:#151820;border:1px solid #1E2229;border-radius:6px;color:#F0F2F5;font-size:.85rem;}
+input:focus,select:focus{outline:none;border-color:#F5C542;}
+.btn{margin-top:16px;width:100%;padding:10px;background:#F5C542;color:#07080A;font-weight:700;font-size:.9rem;border:none;border-radius:6px;cursor:pointer;}
+.btn:hover{background:#e6b800;}
+.btn-remove{background:#EF4444;color:#fff;font-size:.75rem;padding:4px 10px;border:none;border-radius:4px;cursor:pointer;margin-left:8px;}
+.btn-remove:hover{background:#c53030;}
+.msg{margin-top:10px;font-size:.8rem;padding:8px 12px;border-radius:6px;}
+.msg.ok{background:rgba(34,197,94,.15);color:#22C55E;border:1px solid rgba(34,197,94,.3);}
+.msg.err{background:rgba(239,68,68,.15);color:#EF4444;border:1px solid rgba(239,68,68,.3);}
+.vend-list{display:flex;flex-direction:column;gap:8px;}
+.vend-item{display:flex;align-items:center;justify-content:space-between;background:#151820;border:1px solid #1E2229;border-radius:6px;padding:10px 14px;}
+.vend-info{display:flex;flex-direction:column;gap:2px;}
+.vend-nome{font-size:.88rem;font-weight:600;}
+.vend-det{font-size:.7rem;color:#5A6070;}
+.badge{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;}
+.badge.atacado{background:rgba(245,197,66,.15);color:#F5C542;border:1px solid rgba(245,197,66,.3);}
+.badge.varejo{background:rgba(59,130,246,.15);color:#3B82F6;border:1px solid rgba(59,130,246,.3);}
+#login-wrap{width:100%;max-width:360px;}
+#main-wrap{display:none;width:100%;max-width:480px;}
+</style>
+</head>
+<body>
+<h1>⚙️ Gerenciar Vendedores</h1>
+<p>Calçados 24H — Painel Admin</p>
+
+<div id="login-wrap" class="card">
+  <h2>Acesso</h2>
+  <label>Senha</label>
+  <input type="password" id="senha-input" placeholder="Digite a senha"/>
+  <button class="btn" onclick="entrar()">Entrar</button>
+  <div id="login-msg"></div>
+</div>
+
+<div id="main-wrap">
+  <div class="card">
+    <h2>Adicionar Vendedor</h2>
+    <label>Nome</label>
+    <input type="text" id="add-nome" placeholder="Ex: João Silva"/>
+    <label>ID Bling</label>
+    <input type="text" id="add-id" placeholder="Ex: 15596884435"/>
+    <label>Equipe</label>
+    <select id="add-tipo">
+      <option value="varejo">Varejo</option>
+      <option value="atacado">Atacado</option>
+    </select>
+    <button class="btn" onclick="adicionar()">➕ Adicionar</button>
+    <div id="add-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Vendedores Ativos</h2>
+    <div id="vend-list" class="vend-list">Carregando...</div>
+  </div>
+</div>
+
+<script>
+var SERVER = 'https://dashboard-wr1x.onrender.com';
+var senhaAtual = '';
+
+function entrar() {
+  var s = document.getElementById('senha-input').value;
+  if (!s) return;
+  senhaAtual = s;
+  carregarVendedores(function(ok) {
+    if (ok) {
+      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('main-wrap').style.display = 'block';
+    } else {
+      document.getElementById('login-msg').className = 'msg err';
+      document.getElementById('login-msg').textContent = 'Senha incorreta.';
+    }
+  });
+}
+
+document.getElementById('senha-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') entrar();
+});
+
+function carregarVendedores(cb) {
+  fetch(SERVER + '/vendedores')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      renderVendedores(data);
+      if (cb) cb(true);
+    })
+    .catch(function() { if (cb) cb(false); });
+}
+
+function renderVendedores(data) {
+  var ids = Object.keys(data);
+  if (ids.length === 0) {
+    document.getElementById('vend-list').innerHTML = '<p style="color:#5A6070;font-size:.8rem;">Nenhum vendedor cadastrado.</p>';
+    return;
+  }
+  ids.sort(function(a,b) {
+    if (data[a].tipo !== data[b].tipo) return data[a].tipo === 'atacado' ? -1 : 1;
+    return data[a].nome.localeCompare(data[b].nome);
+  });
+  var html = '';
+  ids.forEach(function(id) {
+    var v = data[id];
+    html += '<div class="vend-item">' +
+      '<div class="vend-info">' +
+        '<span class="vend-nome">' + v.nome + '</span>' +
+        '<span class="vend-det">ID: ' + id + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span class="badge ' + v.tipo + '">' + v.tipo + '</span>' +
+        '<button class="btn-remove" onclick="remover(\'' + id + '\',\'' + v.nome + '\')">Remover</button>' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('vend-list').innerHTML = html;
+}
+
+function adicionar() {
+  var nome = document.getElementById('add-nome').value.trim();
+  var id = document.getElementById('add-id').value.trim();
+  var tipo = document.getElementById('add-tipo').value;
+  var msg = document.getElementById('add-msg');
+  if (!nome || !id) {
+    msg.className = 'msg err';
+    msg.textContent = 'Preencha nome e ID.';
+    return;
+  }
+  fetch(SERVER + '/vendedores', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({senha: senhaAtual, id: id, nome: nome, tipo: tipo})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      msg.className = 'msg ok';
+      msg.textContent = nome + ' adicionado com sucesso!';
+      document.getElementById('add-nome').value = '';
+      document.getElementById('add-id').value = '';
+      renderVendedores(data.vendedores);
+    } else {
+      msg.className = 'msg err';
+      msg.textContent = data.error || 'Erro ao adicionar.';
+    }
+  })
+  .catch(function() {
+    msg.className = 'msg err';
+    msg.textContent = 'Erro de conexao com o servidor.';
+  });
+}
+
+function remover(id, nome) {
+  if (!confirm('Remover ' + nome + '?')) return;
+  fetch(SERVER + '/vendedores/' + id, {
+    method: 'DELETE',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({senha: senhaAtual})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) renderVendedores(data.vendedores);
+  });
+}
+</script>
+</body>
+</html>
